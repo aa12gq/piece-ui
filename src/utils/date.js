@@ -28,3 +28,4 @@ export function formatTimeToStr(times, pattern) {
   }
   return d.toLocaleString()
 }
+
