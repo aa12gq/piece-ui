@@ -1,10 +1,9 @@
 import service from '@/utils/request'
 // @Router /register/getRegisterTaskList [get]
-export const getRegisterTaskList = (data) => {
+export const getRegisterTaskList = (page, pageSize) => {
   return service({
-    url: '/registerTask/getRegisterTaskList',
+    url: `/registerTask/getRegisterTaskList?page=${page}&pageSize=${pageSize}`,
     method: 'get',
-    data
   })
 }
 

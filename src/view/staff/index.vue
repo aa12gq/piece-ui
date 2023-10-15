@@ -47,7 +47,6 @@
           prop="UpdatedAt"
         />
       </el-table>
-      <!-- 添加分页组件 -->
       <el-pagination
         :page-size="pageSize"
         :total="total"

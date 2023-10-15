@@ -1,22 +1,53 @@
 <template>
   <div class="authority">
-    <warning-bar title="注：注册管理" />
+    <warning-bar title="注：账号注册" />
     <div class="gva-table-box">
       <div class="gva-btn-list">
         <el-button
           type="primary"
-          icon="plus"
+          icon="CirclePlus"
           @click="addAuthority(0)"
         >新建任务</el-button>
-        <el-button
-          type="warning"
-          icon="plus"
-        >暂停任务</el-button>
+        <el-tooltip
+          class="box-item"
+          effect="dark"
+          content="暂未开发，敬请期待"
+          placement="top-start"
+        >
+          <el-button
+            type="primary"
+            icon="Expand"
+            disabled="true"
+          >导出账号</el-button>
+        </el-tooltip>
+        <el-tooltip
+          class="box-item"
+          effect="dark"
+          content="暂未开发，敬请期待"
+          placement="top-start"
+        >
+          <el-button
+            type="warning"
+            icon="VideoPlay"
+            disabled="true"
+          >暂停任务</el-button>
 
-        <el-button
-          type="info"
-          icon="pause"
-        >恢复任务</el-button>
+        </el-tooltip>
+
+        <el-tooltip
+          class="box-item"
+          effect="dark"
+          content="暂未开发，敬请期待"
+          placement="top-start"
+        >
+          <el-button
+            type="info"
+            icon="VideoPause"
+            disabled="true"
+          >恢复任务</el-button>
+
+        </el-tooltip>
+
         <el-button
           type="primary"
           icon="refresh"
@@ -42,34 +73,44 @@
         />
         <el-table-column
           align="left"
+          label="文件名称"
+          min-width="180"
+          prop="file_name"
+        />
+        <el-table-column
+          align="left"
           label="任务状态"
           min-width="180"
-          prop="status"
-        />
+        >
+          <template #default="{ row }">
+            <el-button
+              :type="getButtonType(row.status)"
+              size="small"
+              :loading-icon="Eleme"
+              :loading="row.status == 'Running'"
+              :icon="getButtonIcon(row.status)"
+            >
+              {{ getStatusButtonType(row.status) }}
+            </el-button>
+          </template>
+        </el-table-column>
+
         <el-table-column
           align="left"
           label="总数/已处理"
           min-width="180"
           prop="authorityName"
-        />
-        <el-table-column
+        >
+          <template #default="{ row }">
+            {{ row.phone_number_total }}/{{ row.processed_count }}
+          </template>
+        </el-table-column>
+        <!-- <el-table-column
           align="left"
           label="代理"
           min-width="180"
           prop="authorityName"
-        />
-        <el-table-column
-          align="left"
-          label="注册类型"
-          min-width="180"
-          prop="authorityName"
-        />
-        <el-table-column
-          align="left"
-          label="协程数量"
-          min-width="180"
-          prop="authorityName"
-        />
+        /> -->
         <el-table-column
           align="left"
           label="创建时间"
@@ -85,15 +126,10 @@
         <el-table-column
           align="left"
           label="操作"
-          width="460"
+          width="150"
+          fixed="right"
         >
           <template #default="scope">
-            <!-- <el-button
-              icon="setting"
-              type="primary"
-              link
-              @click="opdendrawer(scope.row)"
-            >设置权限</el-button> -->
             <el-button
               icon="edit"
               type="primary"
@@ -109,6 +145,15 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-pagination
+        :current-page="page"
+        :page-size="pageSize"
+        :page-sizes="[10, 30, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @current-change="handlePageChange"
+        @size-change="handleSizeChange"
+      />
     </div>
     <!-- 新增角色弹窗 -->
     <el-dialog
@@ -273,17 +318,23 @@ const rules = ref({
 
 const page = ref(1)
 const total = ref(0)
-const pageSize = ref(999)
+const pageSize = ref(10)
 const tableData = ref([])
-const searchInfo = ref({})
+// const searchInfo = ref({})
+
+const handlePageChange = (val) => {
+  page.value = val
+  getTableData()
+}
+
+const handleSizeChange = (val) => {
+  pageSize.value = val
+  getTableData()
+}
 
 // 查询
 const getTableData = async() => {
-  const table = await getRegisterTaskList({
-    page: page.value,
-    pageSize: pageSize.value,
-    ...searchInfo.value,
-  })
+  const table = await getRegisterTaskList(page.value, pageSize.value)
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
@@ -293,6 +344,7 @@ const getTableData = async() => {
       })
       tableData.value = table.data.list
     }, 100)
+    console.log('测试', table)
     total.value = table.data.total
     page.value = table.data.page
     pageSize.value = table.data.pageSize
@@ -481,6 +533,58 @@ const editAuthority = (row) => {
   setOptions()
   dialogFormVisible.value = true
 }
+
+const getStatusButtonType = (status) => {
+  switch (status) {
+    case 'Pending':
+      return '等待'
+    case 'Success':
+      return '已成功'
+    case 'Failed':
+      return '失败'
+    case 'Running':
+      return '运行中'
+    case 'Pause':
+      return '已暂停'
+    default:
+      return ''
+  }
+}
+
+const getButtonType = (status) => {
+  switch (status) {
+    case 'Pending':
+      return 'warning'
+    case 'Success':
+      return 'success'
+    case 'Failed':
+      return 'danger'
+    case 'Running':
+      return 'info'
+    case 'Pause':
+      return 'danger'
+    default:
+      return ''
+  }
+}
+
+const getButtonIcon = (status) => {
+  switch (status) {
+    case 'Pending':
+      return 'el-icon-clock'
+    case 'Success':
+      return 'CircleCheck'
+    case 'Failed':
+      return 'el-icon-circle-close'
+    case 'Running':
+      return 'el-icon-loading'
+    case 'Pause':
+      return 'VideoPlay'
+    default:
+      return ''
+  }
+}
+
 </script>
 
 <style lang="scss">
