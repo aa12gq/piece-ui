@@ -5,8 +5,10 @@
       <div class="gva-btn-list" />
       <div class="gva-btn-list">
         <el-button
-          type="primary"
+          color="#626aef"
           icon="refresh"
+          :dark="isDark"
+          plain
           @click="getTableData"
         >刷新</el-button>
 

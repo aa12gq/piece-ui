@@ -1,12 +1,12 @@
 <template>
   <div class="authority">
-    <warning-bar title="注：账号注册" />
+    <warning-bar title="注：账号注册, 鉴于当前系统尚处于初始开发阶段，注册功能为粗粒度实现，因此其存在局限性和缺陷" />
     <div class="gva-table-box">
       <div class="gva-btn-list">
         <el-button
           type="primary"
           icon="CirclePlus"
-          @click="addAuthority(0)"
+          @click="drawer = true"
         >新建任务</el-button>
         <el-tooltip
           class="box-item"
@@ -25,28 +25,14 @@
           effect="dark"
           content="暂未开发，敬请期待"
           placement="top-start"
-        >
-          <el-button
-            type="warning"
-            icon="VideoPlay"
-            disabled="true"
-          >暂停任务</el-button>
-
-        </el-tooltip>
+        />
 
         <el-tooltip
           class="box-item"
           effect="dark"
           content="暂未开发，敬请期待"
           placement="top-start"
-        >
-          <el-button
-            type="info"
-            icon="VideoPause"
-            disabled="true"
-          >恢复任务</el-button>
-
-        </el-tooltip>
+        />
 
         <el-button
           type="primary"
@@ -89,6 +75,7 @@
               :loading-icon="Eleme"
               :loading="row.status == 'Running'"
               :icon="getButtonIcon(row.status)"
+              plain
             >
               {{ getStatusButtonType(row.status) }}
             </el-button>
@@ -126,7 +113,7 @@
         <el-table-column
           align="left"
           label="操作"
-          width="150"
+          width="400"
           fixed="right"
         >
           <template #default="scope">
@@ -136,6 +123,20 @@
               link
               @click="editAuthority(scope.row)"
             >编辑</el-button>
+            <!-- <el-button
+              v-if="scope.row.status === 'Pause'"
+              type="info"
+              icon="VideoPause"
+              link
+            >恢复</el-button>
+
+            <el-button
+              v-if="scope.row.status === 'Running'"
+              type="danger"
+              icon="VideoPlay"
+              link
+            >暂停</el-button> -->
+
             <el-button
               icon="delete"
               type="primary"
@@ -155,104 +156,90 @@
         @size-change="handleSizeChange"
       />
     </div>
-    <!-- 新增角色弹窗 -->
-    <el-dialog
-      v-model="dialogFormVisible"
-      :title="dialogTitle"
-    >
-      <el-form
-        ref="authorityForm"
-        :model="form"
-        :rules="rules"
-        label-width="80px"
-      >
-        <el-form-item
-          label="父级角色"
-          prop="parentId"
-        >
-          <el-cascader
-            v-model="form.parentId"
-            style="width: 100%"
-            :disabled="dialogType === 'add'"
-            :options="AuthorityOption"
-            :props="{
-              checkStrictly: true,
-              label: 'authorityName',
-              value: 'authorityId',
-              disabled: 'disabled',
-              emitPath: false,
-            }"
-            :show-all-levels="false"
-            filterable
-          />
-        </el-form-item>
-        <el-form-item
-          label="角色ID"
-          prop="authorityId"
-        >
-          <el-input
-            v-model="form.authorityId"
-            :disabled="dialogType === 'edit'"
-            autocomplete="off"
-            maxlength="15"
-          />
-        </el-form-item>
-        <el-form-item
-          label="角色姓名"
-          prop="authorityName"
-        >
-          <el-input
-            v-model="form.authorityName"
-            autocomplete="off"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="closeDialog">取 消</el-button>
-          <el-button
-            type="primary"
-            @click="enterDialog"
-          >确 定</el-button>
-        </div>
-      </template>
-    </el-dialog>
 
     <el-drawer
-      v-if="drawer"
       v-model="drawer"
-      custom-class="auth-drawer"
-      :with-header="false"
-      size="40%"
-      title="角色配置"
+      title="新建任务"
+      :direction="direction"
+      :before-close="handleClose"
     >
-      <el-tabs
-        :before-leave="autoEnter"
-        type="border-card"
+      <el-form
+        ref="ruleFormRef"
+        :model="ruleForm"
+        status-icon
+        :rules="rules"
+        label-width="120px"
+        class="demo-ruleForm"
       >
-        <el-tab-pane label="角色菜单">
-          <Menus
-            ref="menus"
-            :row="activeRow"
-            @changeRow="changeRow"
+        <el-form-item
+          label="任务名称"
+          prop="workName"
+        >
+          <el-input
+            v-model="ruleForm.taskName"
+            type="text"
+            autocomplete="off"
           />
-        </el-tab-pane>
-        <el-tab-pane label="角色api">
-          <Apis
-            ref="apis"
-            :row="activeRow"
-            @changeRow="changeRow"
-          />
-        </el-tab-pane>
-        <el-tab-pane label="资源权限">
-          <Datas
-            ref="datas"
-            :authority="tableData"
-            :row="activeRow"
-            @changeRow="changeRow"
-          />
-        </el-tab-pane>
-      </el-tabs>
+        </el-form-item>
+        <el-form-item
+          label="上传文件"
+          prop="checkPass"
+        >
+          <el-upload
+            class="upload-demo"
+            :file-list="ruleForm.file ? [ruleForm.file] : []"
+            :on-change="handleUploadChange"
+            :before-upload="() => false"
+          >
+            <el-button
+              size="small"
+              type="primary"
+            >点击上传</el-button>
+          </el-upload>
+          <div
+            v-if="ruleForm.file"
+            class="ml-2"
+          >{{ ruleForm.file.name }}</div> <!-- 显示文件名 -->
+        </el-form-item>
+        <el-form-item>
+          <el-button
+            type="primary"
+            @click="submitForm(ruleFormRef)"
+          >提交</el-button>
+          <el-button @click="resetForm(ruleFormRef)">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-drawer>
+    <el-drawer
+      v-model="drawer2"
+      :direction="direction"
+    >
+      <template #header>
+        <h4>set title by slot</h4>
+      </template>
+      <template #default>
+        <div>
+          <el-radio
+            v-model="radio1"
+            label="Option 1"
+            size="large"
+          >Option 1</el-radio>
+          <el-radio
+            v-model="radio1"
+            label="Option 2"
+            size="large"
+          >Option 2</el-radio>
+        </div>
+      </template>
+      <template #footer>
+        <div style="flex: auto">
+          <el-button @click="cancelClick">cancel</el-button>
+          <el-button
+            type="primary"
+            @click="confirmClick"
+          >confirm</el-button>
+        </div>
+      </template>
     </el-drawer>
   </div>
 </template>
@@ -266,15 +253,30 @@ import {
 } from '@/api/authority'
 import {
   getRegisterTaskList,
+  createRegisterTask,
 } from '@/api/registerTask'
-import Menus from '@/view/superAdmin/authority/components/menus.vue'
-import Apis from '@/view/superAdmin/authority/components/apis.vue'
-import Datas from '@/view/superAdmin/authority/components/datas.vue'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
-
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+
+const drawer2 = ref(false)
+const direction = ref('rtl')
+
+const handleClose = (done) => {
+  done()
+}
+function cancelClick() {
+  drawer2.value = false
+}
+function confirmClick() {
+  ElMessageBox.confirm(`Are you confirm to chose ${radio1.value} ?`)
+    .then(() => {
+      drawer2.value = false
+    })
+    .catch(() => {
+    })
+}
 
 defineOptions({
   name: 'Authority',
@@ -295,9 +297,8 @@ const AuthorityOption = ref([
 ])
 const drawer = ref(false)
 const dialogType = ref('add')
-const activeRow = ref({})
 
-const dialogTitle = ref('新增角色')
+const dialogTitle = ref('新建任务')
 const dialogFormVisible = ref(false)
 const apiDialogFlag = ref(false)
 const copyForm = ref({})
@@ -306,14 +307,6 @@ const form = ref({
   authorityId: 0,
   authorityName: '',
   parentId: 0,
-})
-const rules = ref({
-  authorityId: [
-    { required: true, message: '请输入角色ID', trigger: 'blur' },
-    { validator: mustUint, trigger: 'blur', message: '必须为正整数' },
-  ],
-  authorityName: [{ required: true, message: '请输入角色名', trigger: 'blur' }],
-  parentId: [{ required: true, message: '请选择父角色', trigger: 'blur' }],
 })
 
 const page = ref(1)
@@ -353,24 +346,9 @@ const getTableData = async() => {
 
 getTableData()
 
-const changeRow = (key, value) => {
-  activeRow.value[key] = value
-}
-const menus = ref(null)
-const apis = ref(null)
-const datas = ref(null)
-const autoEnter = (activeName, oldActiveName) => {
-  const paneArr = [menus, apis, datas]
-  if (oldActiveName) {
-    if (paneArr[oldActiveName].value.needConfirm) {
-      paneArr[oldActiveName].value.enterAndNext()
-      paneArr[oldActiveName].value.needConfirm = false
-    }
-  }
-}
-// 删除角色
+// 删除任务
 const deleteAuth = (row) => {
-  ElMessageBox.confirm('此操作将永久删除该角色, 是否继续?', '提示', {
+  ElMessageBox.confirm('此操作将永久删除该任务, 是否继续?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
@@ -513,15 +491,6 @@ const setAuthorityOptions = (AuthorityData, optionsData, disabled) => {
       }
     })
 }
-// 增加角色
-const addAuthority = (parentId) => {
-  initForm()
-  dialogTitle.value = '新增角色'
-  dialogType.value = 'add'
-  form.value.parentId = parentId
-  setOptions()
-  dialogFormVisible.value = true
-}
 // 编辑角色
 const editAuthority = (row) => {
   setOptions()
@@ -585,6 +554,89 @@ const getButtonIcon = (status) => {
   }
 }
 
+// 新建任务
+const ruleFormRef = ref()
+
+const validatePass = (rule, value, callback) => {
+  if (value === '') {
+    callback(new Error('请输入任务名称'))
+  } else {
+    if (ruleForm.checkPass !== '') {
+      if (!ruleFormRef.value) return
+      ruleFormRef.value.validateField('checkPass', () => null)
+    }
+    callback()
+  }
+}
+const validatePass2 = (rule, value, callback) => {
+  if (value === '') {
+    callback(new Error('请输入任务名称'))
+  } else if (value !== ruleForm.pass) {
+    callback(new Error("Two inputs don't match!"))
+  } else {
+    callback()
+  }
+}
+
+const handleUploadChange = (file, fileList) => {
+  if (fileList.length > 0) {
+    ruleForm.file = fileList[0].raw
+  } else {
+    ruleForm.file = null
+  }
+}
+
+const ruleForm = reactive({
+  taskName: '',
+  file: null,
+})
+
+const rules = reactive({
+  taskName: [{ validator: validatePass, trigger: 'blur' }],
+  file: [{ validator: validatePass2, trigger: 'blur' }],
+})
+
+const submitForm = (formEl) => {
+  if (!formEl) return
+
+  formEl.validate(async(valid) => {
+    if (valid) {
+      const formData = new FormData()
+      formData.append('taskName', ruleForm.taskName)
+      if (ruleForm.file) {
+        formData.append('file', ruleForm.file, ruleForm.file.name)
+      }
+
+      try {
+        const response = await createRegisterTask(formData)
+        console.log('Task created successfully!', response)
+        ElMessage({
+          type: 'success',
+          message: '创建成功！',
+          showClose: true,
+        })
+        setTimeout(() => {
+          handleClose()
+        }, 200)
+      } catch (error) {
+        console.error('Error creating task:', error)
+        ElMessage({
+          type: 'error',
+          message: error,
+          showClose: true,
+        })
+      }
+    } else {
+      console.log('error submit!')
+      return false
+    }
+  })
+}
+
+const resetForm = (formEl) => {
+  if (!formEl) return
+  formEl.resetFields()
+}
 </script>
 
 <style lang="scss">
