@@ -1,6 +1,6 @@
 <template>
   <div class="authority">
-    <warning-bar title="注：账号注册, 鉴于当前系统尚处于初始开发阶段，注册功能为粗粒度实现，因此其存在局限性和缺陷" />
+    <warning-bar title="注：当前系统处于初始开发阶段时，批量筛号功能正在被研发人员加工开发。在使用该功能时，您需要注意到其仍未经过完整的测试和验证，可能会受到限制和缺陷的影响" />
     <div class="gva-table-box">
       <div class="gva-btn-list">
         <el-button
@@ -13,13 +13,7 @@
           effect="dark"
           content="暂未开发，敬请期待"
           placement="top-start"
-        >
-          <el-button
-            type="primary"
-            icon="Expand"
-            disabled="true"
-          >导出账号</el-button>
-        </el-tooltip>
+        />
         <el-tooltip
           class="box-item"
           effect="dark"
@@ -55,7 +49,7 @@
           align="left"
           label="任务名称"
           min-width="180"
-          prop="task_name"
+          prop="taskName"
         />
         <el-table-column
           align="left"
@@ -86,10 +80,10 @@
           align="left"
           label="总数"
           min-width="180"
-          prop="authorityName"
+          prop="totalNumber"
         >
           <template #default="{ row }">
-            {{ row.phone_number_total }}
+            {{ row.totalNumber }}
           </template>
         </el-table-column>
         <!-- <el-table-column
@@ -102,13 +96,13 @@
           align="left"
           label="创建时间"
           min-width="180"
-          prop="start_time"
+          prop="createdAt"
         />
         <el-table-column
           align="left"
           label="更新时间"
           min-width="180"
-          prop="end_time"
+          prop="updatedAt"
         />
         <el-table-column
           align="left"
@@ -246,9 +240,9 @@ import {
   copyAuthority,
 } from '@/api/authority'
 import {
-  getRegisterTaskList,
-  createRegisterTask,
-} from '@/api/registerTask'
+  getSieveTaskList,
+  createSieveTask,
+} from '@/api/sieve'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
 import { ref, reactive } from 'vue'
@@ -308,13 +302,13 @@ const handleSizeChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getRegisterTaskList(page.value, pageSize.value)
+  const table = await getSieveTaskList(page.value, pageSize.value)
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
       table.data.list.forEach((item) => {
-        item.start_time = item.start_time ? formatTimeToStr(item.start_time, 'yyyy-MM-dd hh:mm:ss') : ''
-        item.end_time = item.end_time ? formatTimeToStr(item.end_time, 'yyyy-MM-dd hh:mm:ss') : ''
+        item.createdAt = item.createdAt ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss') : ''
+        item.updatedAt = item.updatedAt ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
       })
       tableData.value = table.data.list
     }, 100)
@@ -436,6 +430,7 @@ const enterDialog = () => {
     }
   })
 }
+
 const setOptions = () => {
   AuthorityOption.value = [
     {
@@ -569,7 +564,7 @@ const submitForm = async() => {
   }
 
   try {
-    await createRegisterTask(formData)
+    await createSieveTask(formData)
     ElMessage.success('创建成功！')
     handleClose()
   } catch (error) {
