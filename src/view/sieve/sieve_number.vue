@@ -25,6 +25,11 @@
           prop="ID"
         />
         <el-table-column
+          label="任务ID"
+          min-width="180"
+          prop="task_id"
+        />
+        <el-table-column
           align="left"
           label="手机号码"
           min-width="180"
@@ -80,6 +85,7 @@ import { getSievenNumberList } from '@/api/sieve'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { ref, onMounted } from 'vue'
 import { formatTimeToStr } from '@/utils/date'
+import { useRoute } from 'vue-router'
 
 defineOptions({
   name: 'Staff',
@@ -89,6 +95,7 @@ const currentPage = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref(null)
+const route = useRoute()
 
 // 监听currentPage变化，获取对应页数的数据
 const handlePageChange = (page) => {
@@ -98,20 +105,21 @@ const handlePageChange = (page) => {
 
 // 查询数据
 const getTableData = async() => {
+  console.log('测试', route.params.id)
   const table = await getSievenNumberList(
     currentPage.value,
-    pageSize.value
+    pageSize.value,
+    route.params.id
   )
   if (table.code === 0) {
     table.data.list.forEach((item) => {
-      item.CreatedAt = item.CreatedAt ? formatTimeToStr(item.CreatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
-      item.UpdatedAt = item.UpdatedAt ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
+      item.createdAt = item.createdAt ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss') : ''
+      item.updatedAt = item.updatedAt ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
     })
     tableData.value = []
     setTimeout(() => {
       tableData.value = table.data.list
     }, 100)
-    console.log('测试', table.data.list)
     total.value = table.data.total
     currentPage.value = table.data.page
     pageSize.value = table.data.pageSize

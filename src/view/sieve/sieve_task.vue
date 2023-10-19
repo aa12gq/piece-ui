@@ -3,37 +3,59 @@
     <warning-bar title="注：当前系统处于初始开发阶段时，批量筛号功能正在被研发人员加工开发。在使用该功能时，您需要注意到其仍未经过完整的测试和验证，可能会受到限制和缺陷的影响" />
     <div class="gva-table-box">
       <div class="gva-btn-list">
-        <el-button
-          type="primary"
-          icon="CirclePlus"
-          @click="drawer = true"
-        >新建任务</el-button>
-        <el-tooltip
-          class="box-item"
-          effect="dark"
-          content="暂未开发，敬请期待"
-          placement="top-start"
-        />
-        <el-tooltip
-          class="box-item"
-          effect="dark"
-          content="暂未开发，敬请期待"
-          placement="top-start"
-        />
+        <!-- 搜索框区域 -->
+        <div class="search-section flex space-x-2">
+          <el-input
+            v-model="searchText"
+            placeholder="请输入任务名称"
+            clearable
+            style="width: 200px;"
+            @clear="clearSearch"
+            @keyup.enter.native="searchTask"
+          />
+          <el-button
+            type="primary"
+            icon="Search"
+            @click="searchTask"
+          >搜索</el-button>
 
-        <el-tooltip
-          class="box-item"
-          effect="dark"
-          content="暂未开发，敬请期待"
-          placement="top-start"
-        />
+        </div>
+        <!-- 按钮区域 -->
+        <div class="button-section ml-auto">
+          <el-button
+            type="primary"
+            icon="CirclePlus"
+            @click="drawer = true"
+          >新建任务</el-button>
+          <el-tooltip
+            class="box-item"
+            effect="dark"
+            content="暂未开发，敬请期待"
+            placement="top-start"
+          />
+          <el-tooltip
+            class="box-item"
+            effect="dark"
+            content="暂未开发，敬请期待"
+            placement="top-start"
+          />
 
-        <el-button
-          type="primary"
-          icon="refresh"
-          @click="getTableData"
-        >刷新</el-button>
+          <el-tooltip
+            class="box-item"
+            effect="dark"
+            content="暂未开发，敬请期待"
+            placement="top-start"
+          />
+
+          <el-button
+            type="primary"
+            icon="refresh"
+            @click="getTableData"
+          >刷新</el-button>
+        </div>
+
       </div>
+
       <el-table
         :data="tableData"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
@@ -115,8 +137,8 @@
               icon="edit"
               type="primary"
               link
-              @click="editAuthority(scope.row)"
-            >编辑</el-button>
+              @click="$router.push({ name: 'sieve_number', params: { id: scope.row.ID } })"
+            >详情</el-button>
             <!-- <el-button
               v-if="scope.row.status === 'Pause'"
               type="info"
@@ -234,14 +256,9 @@
 
 <script setup>
 import {
-  deleteAuthority,
-  createAuthority,
-  updateAuthority,
-  copyAuthority,
-} from '@/api/authority'
-import {
   getSieveTaskList,
   createSieveTask,
+  deleteByTaskId,
 } from '@/api/sieve'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
@@ -266,29 +283,14 @@ function confirmClick() {
     })
 }
 
-defineOptions({
-  name: 'Authority',
-})
-
-const AuthorityOption = ref([
-  {
-    authorityId: 0,
-    authorityName: '根角色',
-  },
-])
 const drawer = ref(false)
-const dialogType = ref('add')
-
-const dialogTitle = ref('新建任务')
-const dialogFormVisible = ref(false)
-const apiDialogFlag = ref(false)
-const copyForm = ref({})
 
 const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref([])
-// const searchInfo = ref({})
+const searchText = ref('')
+const currentSearchText = ref('')
 
 const handlePageChange = (val) => {
   page.value = val
@@ -300,9 +302,20 @@ const handleSizeChange = (val) => {
   getTableData()
 }
 
+const searchTask = async() => {
+  currentSearchText.value = searchText.value
+  await getTableData()
+}
+
+const clearSearch = () => {
+  searchText.value = ''
+  currentSearchText.value = ''
+  getTableData() // 重新获取数据，不带搜索条件
+}
+
 // 查询
 const getTableData = async() => {
-  const table = await getSieveTaskList(page.value, pageSize.value)
+  const table = await getSieveTaskList(page.value, pageSize.value, currentSearchText.value)
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
@@ -312,7 +325,6 @@ const getTableData = async() => {
       })
       tableData.value = table.data.list
     }, 100)
-    console.log('测试', table)
     total.value = table.data.total
     page.value = table.data.page
     pageSize.value = table.data.pageSize
@@ -329,7 +341,7 @@ const deleteAuth = (row) => {
     type: 'warning',
   })
     .then(async() => {
-      const res = await deleteAuthority({ authorityId: row.authorityId })
+      const res = await deleteByTaskId(row.ID)
       if (res.code === 0) {
         ElMessage({
           type: 'success',
@@ -347,136 +359,6 @@ const deleteAuth = (row) => {
         message: '已取消删除',
       })
     })
-}
-// 初始化表单
-const authorityForm = ref(null)
-const initForm = () => {
-  if (authorityForm.value) {
-    authorityForm.value.resetFields()
-  }
-  form.value = {
-    authorityId: 0,
-    authorityName: '',
-    parentId: 0,
-  }
-}
-// 关闭窗口
-const closeDialog = () => {
-  initForm()
-  dialogFormVisible.value = false
-  apiDialogFlag.value = false
-}
-// 确定弹窗
-
-const enterDialog = () => {
-  authorityForm.value.validate(async(valid) => {
-    if (valid) {
-      form.value.authorityId = Number(form.value.authorityId)
-      switch (dialogType.value) {
-        case 'add':
-          {
-            const res = await createAuthority(form.value)
-            if (res.code === 0) {
-              ElMessage({
-                type: 'success',
-                message: '添加成功!',
-              })
-              getTableData()
-              closeDialog()
-            }
-          }
-          break
-        case 'edit':
-          {
-            const res = await updateAuthority(form.value)
-            if (res.code === 0) {
-              ElMessage({
-                type: 'success',
-                message: '添加成功!',
-              })
-              getTableData()
-              closeDialog()
-            }
-          }
-          break
-        case 'copy': {
-          const data = {
-            authority: {
-              authorityId: 0,
-              authorityName: '',
-              datauthorityId: [],
-              parentId: 0,
-            },
-            oldAuthorityId: 0,
-          }
-          data.authority.authorityId = form.value.authorityId
-          data.authority.authorityName = form.value.authorityName
-          data.authority.parentId = form.value.parentId
-          data.authority.dataAuthorityId = copyForm.value.dataAuthorityId
-          data.oldAuthorityId = copyForm.value.authorityId
-          const res = await copyAuthority(data)
-          if (res.code === 0) {
-            ElMessage({
-              type: 'success',
-              message: '复制成功！',
-            })
-            getTableData()
-          }
-        }
-      }
-
-      initForm()
-      dialogFormVisible.value = false
-    }
-  })
-}
-
-const setOptions = () => {
-  AuthorityOption.value = [
-    {
-      authorityId: 0,
-      authorityName: '根角色',
-    },
-  ]
-  setAuthorityOptions(tableData.value, AuthorityOption.value, false)
-}
-const setAuthorityOptions = (AuthorityData, optionsData, disabled) => {
-  form.value.authorityId = String(form.value.authorityId)
-  AuthorityData &&
-    AuthorityData.forEach((item) => {
-      if (item.children && item.children.length) {
-        const option = {
-          authorityId: item.authorityId,
-          authorityName: item.authorityName,
-          disabled: disabled || item.authorityId === form.value.authorityId,
-          children: [],
-        }
-        setAuthorityOptions(
-          item.children,
-          option.children,
-          disabled || item.authorityId === form.value.authorityId
-        )
-        optionsData.push(option)
-      } else {
-        const option = {
-          authorityId: item.authorityId,
-          authorityName: item.authorityName,
-          disabled: disabled || item.authorityId === form.value.authorityId,
-        }
-        optionsData.push(option)
-      }
-    })
-}
-// 编辑角色
-const editAuthority = (row) => {
-  setOptions()
-  dialogTitle.value = '编辑角色'
-  dialogType.value = 'edit'
-  for (const key in form.value) {
-    form.value[key] = row[key]
-  }
-  setOptions()
-  dialogFormVisible.value = true
 }
 
 const getStatusButtonType = (status) => {
