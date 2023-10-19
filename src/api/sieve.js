@@ -15,6 +15,22 @@ export const createSieveTask = (data) => {
   })
 }
 
+export const findSieveTask = (id) => {
+  console.log(id)
+  return service({
+    url: `/sieveTask/findSieveTask/${id}`,
+    method: 'get',
+  })
+}
+
+export const deleteSieveTask = (data) => {
+  return service({
+    url: `/sieveTask/deleteSieveTask`,
+    method: 'delete',
+    data
+  })
+}
+
 export const getSievenNumberList = (page, pageSize, taskId) => {
   return service({
     url: `/sievenNumber/getSievenNumberList?page=${page}&pageSize=${pageSize}&task_id=${taskId}`,

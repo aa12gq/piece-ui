@@ -157,7 +157,7 @@
               icon="delete"
               type="primary"
               link
-              @click="deleteAuth(scope.row)"
+              @click="deleteTask(scope.row)"
             >删除</el-button>
           </template>
         </el-table-column>
@@ -258,7 +258,7 @@
 import {
   getSieveTaskList,
   createSieveTask,
-  deleteByTaskId,
+  deleteSieveTask,
 } from '@/api/sieve'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
@@ -334,18 +334,18 @@ const getTableData = async() => {
 getTableData()
 
 // 删除任务
-const deleteAuth = (row) => {
+const deleteTask = (row) => {
   ElMessageBox.confirm('此操作将永久删除该任务, 是否继续?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
   })
     .then(async() => {
-      const res = await deleteByTaskId(row.ID)
+      const res = await deleteSieveTask({ ID: row.ID })
       if (res.code === 0) {
         ElMessage({
           type: 'success',
-          message: '删除成功!',
+          message: '任务删除成功!',
         })
         if (tableData.value.length === 1 && page.value > 1) {
           page.value--
@@ -360,6 +360,32 @@ const deleteAuth = (row) => {
       })
     })
 }
+
+// const deleteTask = async(taskID) => {
+//   try {
+//     const res = await deleteSieveTask(taskID)
+//     if (res.code === 0) {
+//       ElMessage({
+//         type: 'success',
+//         message: '任务删除成功!',
+//       })
+//       if (tableData.value.length === 1 && page.value > 1) {
+//         page.value--
+//       }
+//       getTableData() // 重新获取数据，更新视图
+//     } else {
+//       ElMessage({
+//         type: 'error',
+//         message: '任务删除失败: ' + res.message, // 显示来自服务器的错误消息
+//       })
+//     }
+//   } catch (error) {
+//     ElMessage({
+//       type: 'error',
+//       message: '删除任务时发生错误: ' + error.toString(),
+//     })
+//   }
+// }
 
 const getStatusButtonType = (status) => {
   switch (status) {

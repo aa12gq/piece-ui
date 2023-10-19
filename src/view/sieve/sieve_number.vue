@@ -4,13 +4,19 @@
     <div class="gva-table-box">
       <div class="gva-btn-list" />
       <div class="gva-btn-list">
-        <el-button
+        <div class="flex items-center px-2 border-t border-b py-2 border-slate-200/60 dark:border-darkmode-400">
+          <div class="font-medium mr-2">当前任务:</div>
+          <span class="bg-slate-400 rounded text-slate-100 px-2 text-sm">
+            {{ taskName }}
+          </span>
+        </div>
+        <div class="ml-auto"><el-button
           color="#626aef"
           icon="refresh"
           :dark="isDark"
           plain
           @click="getTableData"
-        >刷新</el-button>
+        >刷新</el-button></div>
 
       </div>
       <el-table
@@ -81,7 +87,7 @@
 </template>
 
 <script setup>
-import { getSievenNumberList } from '@/api/sieve'
+import { getSievenNumberList, findSieveTask } from '@/api/sieve'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { ref, onMounted } from 'vue'
 import { formatTimeToStr } from '@/utils/date'
@@ -96,6 +102,7 @@ const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref(null)
 const route = useRoute()
+const taskName = ref('')
 
 // 监听currentPage变化，获取对应页数的数据
 const handlePageChange = (page) => {
@@ -105,7 +112,6 @@ const handlePageChange = (page) => {
 
 // 查询数据
 const getTableData = async() => {
-  console.log('测试', route.params.id)
   const table = await getSievenNumberList(
     currentPage.value,
     pageSize.value,
@@ -125,9 +131,20 @@ const getTableData = async() => {
     pageSize.value = table.data.pageSize
   }
 }
+// 在初始化时获取任务名称
+const fetchTaskName = async() => {
+  const taskId = route.params.id
+  const response = await findSieveTask(taskId)
+  if (response && response.data && response.data.resieveTask.taskName) {
+    taskName.value = response.data.resieveTask.taskName
+  }
+}
 
 // 初始化时获取第一页数据
-onMounted(getTableData)
+onMounted(async() => {
+  await fetchTaskName()
+  getTableData()
+})
 
 const getStatusButtonType = (status) => {
   switch (status) {
