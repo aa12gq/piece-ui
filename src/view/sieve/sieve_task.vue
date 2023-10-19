@@ -1,6 +1,6 @@
 <template>
   <div class="authority">
-    <warning-bar title="注：当前系统处于初始开发阶段时，批量筛号功能正在被研发人员加工开发。在使用该功能时，您需要注意到其仍未经过完整的测试和验证，可能会受到限制和缺陷的影响" />
+    <warning-bar title="注：当前系统处于初始开发阶段时，当前仅支持批量筛号功能" />
     <div class="gva-table-box">
       <div class="gva-btn-list">
         <!-- 搜索框区域 -->
@@ -268,8 +268,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const drawer2 = ref(false)
 const direction = ref('rtl')
 
-const handleClose = (done) => {
-  done()
+const handleClose = () => {
+  drawer.value = false
 }
 function cancelClick() {
   drawer2.value = false
@@ -345,7 +345,7 @@ const deleteTask = (row) => {
       if (res.code === 0) {
         ElMessage({
           type: 'success',
-          message: '任务删除成功!',
+          message: '任务删除成功 !',
         })
         if (tableData.value.length === 1 && page.value > 1) {
           page.value--
@@ -360,32 +360,6 @@ const deleteTask = (row) => {
       })
     })
 }
-
-// const deleteTask = async(taskID) => {
-//   try {
-//     const res = await deleteSieveTask(taskID)
-//     if (res.code === 0) {
-//       ElMessage({
-//         type: 'success',
-//         message: '任务删除成功!',
-//       })
-//       if (tableData.value.length === 1 && page.value > 1) {
-//         page.value--
-//       }
-//       getTableData() // 重新获取数据，更新视图
-//     } else {
-//       ElMessage({
-//         type: 'error',
-//         message: '任务删除失败: ' + res.message, // 显示来自服务器的错误消息
-//       })
-//     }
-//   } catch (error) {
-//     ElMessage({
-//       type: 'error',
-//       message: '删除任务时发生错误: ' + error.toString(),
-//     })
-//   }
-// }
 
 const getStatusButtonType = (status) => {
   switch (status) {
@@ -472,9 +446,13 @@ const submitForm = async() => {
   }
 
   try {
-    await createSieveTask(formData)
-    ElMessage.success('创建成功！')
-    handleClose()
+    const response = await createSieveTask(formData)
+    if (response && response.code === 0) {
+      ElMessage.success('创建成功！')
+      handleClose()
+    } else {
+      ElMessage.error(response.message || '创建任务失败')
+    }
   } catch (error) {
     ElMessage.error(error.message || '创建任务失败')
   }
