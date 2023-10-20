@@ -44,3 +44,19 @@ export const deleteByTaskId = (taskId) => {
     method: 'delete',
   })
 }
+
+export const downloadDisableAccounts = (taskId) => {
+  return service({
+    url: `/sievenNumber/downloadDisableAccounts/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
+  })
+}
+
+export const downloadNormalAccounts = (taskId) => {
+  return service({
+    url: `/sievenNumber/downloadNormalAccounts/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob', // 确保响应类型为 blob，这样才能处理文件流
+  })
+}

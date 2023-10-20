@@ -1,16 +1,17 @@
 <template>
   <div class="authority">
-    <warning-bar title="任务筛号列表, 目前为粗粒度版本，后续将开发下载禁用账号、存活账号功能" />
+    <warning-bar
+      title="任务筛号列表, 目前为粗粒度版本，后续将开发下载禁用账号、存活账号功能"
+    />
     <div class="gva-table-box">
       <div class="gva-btn-list" />
       <div class="gva-btn-list">
-
         <div class="flex space-x-4">
           <el-input
             v-model="searchText"
             placeholder="请输入手机号码"
             clearable
-            style="width: 200px;"
+            style="width: 200px"
             @clear="clearSearch"
             @keyup.enter.native="searchTask"
           />
@@ -20,15 +21,29 @@
             @click="searchPhoneNumber"
           >搜索</el-button>
           <el-button
+            type="primary"
+            icon="Download"
+            :disabled="!$route.params.id || $route.params.id === 0"
+            @click="downloadNormal"
+          >下载存活账号</el-button>
+          <el-button
+            type="primary"
+            icon="Download"
+            :disabled="!$route.params.id || $route.params.id === 0"
+            @click="downloadDisable"
+          >下载禁用账号</el-button>
+          <el-button
             color="#626aef"
             icon="refresh"
             :dark="isDark"
             plain
             @click="getTableData"
-          >刷新</el-button></div>
-
+          >刷新</el-button>
+        </div>
       </div>
-      <div class="flex items-center px-2 border-t border-b py-2 border-slate-200/60 dark:border-darkmode-400">
+      <div
+        class="flex items-center px-2 border-t border-b py-2 border-slate-200/60 dark:border-darkmode-400"
+      >
         <div class="font-medium mr-2">当前任务:</div>
         <span class="bg-slate-400 rounded text-slate-100 px-2 text-sm">
           {{ taskName }}
@@ -102,7 +117,12 @@
 </template>
 
 <script setup>
-import { getSievenNumberList, findSieveTask } from '@/api/sieve'
+import {
+  getSievenNumberList,
+  findSieveTask,
+  downloadDisableAccounts,
+  downloadNormalAccounts,
+} from '@/api/sieve'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { ref, onMounted } from 'vue'
 import { formatTimeToStr } from '@/utils/date'
@@ -148,8 +168,12 @@ const getTableData = async() => {
   )
   if (table.code === 0) {
     table.data.list.forEach((item) => {
-      item.createdAt = item.createdAt ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss') : ''
-      item.updatedAt = item.updatedAt ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
+      item.createdAt = item.createdAt
+        ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
+        : ''
+      item.updatedAt = item.updatedAt
+        ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
+        : ''
     })
     tableData.value = []
     setTimeout(() => {
@@ -166,6 +190,68 @@ const fetchTaskName = async() => {
   const response = await findSieveTask(taskId)
   if (response && response.data && response.data.resieveTask.taskName) {
     taskName.value = response.data.resieveTask.taskName
+  }
+}
+
+// 下载禁用账号
+const downloadDisable = async(taskId) => {
+  try {
+    const response = await downloadDisableAccounts(String(route.params.id))
+    // 检查响应是否有效和存在数据
+    if (response && response.data) {
+      console.log('开始下载禁用账号', response)
+
+      // 使用文件流创建一个Blob对象
+      const blob = new Blob([response.data], { type: 'text/plain' }) // 可根据实际返回的内容类型调整
+
+      // 创建一个链接并触发下载
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'disable_accounts.txt') // 设置下载文件的名字
+      document.body.appendChild(link)
+      link.click()
+
+      // 清理
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } else {
+      ElMessage.error('下载禁用账号失败：没有数据返回')
+    }
+  } catch (error) {
+    console.error('下载出错', error)
+  }
+}
+
+// 下载存活账号
+const downloadNormal = async() => {
+  try {
+    const response = await downloadNormalAccounts(String(route.params.id))
+
+    // 检查响应是否有效和存在数据
+    if (response && response.data) {
+      console.log('开始下载存活账号', response)
+
+      // 使用文件流创建一个Blob对象
+      const blob = new Blob([response.data], { type: 'text/plain' }) // 可根据实际返回的内容类型调整
+
+      // 创建一个链接并触发下载
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'normal_accounts.txt') // 设置下载文件的名字
+      document.body.appendChild(link)
+      link.click()
+
+      // 清理
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } else {
+      console.error('下载存活账号失败：没有数据返回')
+    }
+  } catch (error) {
+    ElMessage.error(error || '下载出错')
+    console.error('下载出错', error)
   }
 }
 
@@ -196,21 +282,20 @@ const getButtonType = (status) => {
       return ''
   }
 }
-
 </script>
 
-  <style lang="scss">
-  .authority {
-    .el-input-number {
-      margin-left: 15px;
-      span {
-        display: none;
-      }
+<style lang="scss">
+.authority {
+  .el-input-number {
+    margin-left: 15px;
+    span {
+      display: none;
     }
   }
-  .tree-content {
-    margin-top: 10px;
-    height: calc(100vh - 158px);
-    overflow: auto;
-  }
-  </style>
+}
+.tree-content {
+  margin-top: 10px;
+  height: calc(100vh - 158px);
+  overflow: auto;
+}
+</style>
