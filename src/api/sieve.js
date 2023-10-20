@@ -1,6 +1,6 @@
 import service from '@/utils/request'
 // @Router /register/getRegisterTaskList [get]
-export const getSieveTaskList = (page, pageSize, taskNam) => {
+export const getSieveTaskList = (page, pageSize, taskName) => {
   return service({
     url: `/sieveTask/getSieveTaskList?page=${page}&pageSize=${pageSize}&taskName=${taskName}`,
     method: 'get',

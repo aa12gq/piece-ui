@@ -4,13 +4,8 @@
     <div class="gva-table-box">
       <div class="gva-btn-list" />
       <div class="gva-btn-list">
-        <div class="flex items-center px-2 border-t border-b py-2 border-slate-200/60 dark:border-darkmode-400">
-          <div class="font-medium mr-2">当前任务:</div>
-          <span class="bg-slate-400 rounded text-slate-100 px-2 text-sm">
-            {{ taskName }}
-          </span>
-        </div>
-        <div class="ml-auto">
+
+        <div class="flex space-x-4">
           <el-input
             v-model="searchText"
             placeholder="请输入手机号码"
@@ -32,6 +27,12 @@
             @click="getTableData"
           >刷新</el-button></div>
 
+      </div>
+      <div class="flex items-center px-2 border-t border-b py-2 border-slate-200/60 dark:border-darkmode-400">
+        <div class="font-medium mr-2">当前任务:</div>
+        <span class="bg-slate-400 rounded text-slate-100 px-2 text-sm">
+          {{ taskName }}
+        </span>
       </div>
       <el-table
         :data="tableData"
