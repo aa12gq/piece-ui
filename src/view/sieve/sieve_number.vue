@@ -10,13 +10,27 @@
             {{ taskName }}
           </span>
         </div>
-        <div class="ml-auto"><el-button
-          color="#626aef"
-          icon="refresh"
-          :dark="isDark"
-          plain
-          @click="getTableData"
-        >刷新</el-button></div>
+        <div class="ml-auto">
+          <el-input
+            v-model="searchText"
+            placeholder="请输入手机号码"
+            clearable
+            style="width: 200px;"
+            @clear="clearSearch"
+            @keyup.enter.native="searchTask"
+          />
+          <el-button
+            type="primary"
+            icon="Search"
+            @click="searchPhoneNumber"
+          >搜索</el-button>
+          <el-button
+            color="#626aef"
+            icon="refresh"
+            :dark="isDark"
+            plain
+            @click="getTableData"
+          >刷新</el-button></div>
 
       </div>
       <el-table
@@ -103,6 +117,8 @@ const pageSize = ref(10)
 const tableData = ref(null)
 const route = useRoute()
 const taskName = ref('')
+const searchText = ref('')
+const currentSearchText = ref('')
 
 // 监听currentPage变化，获取对应页数的数据
 const handlePageChange = (page) => {
@@ -110,12 +126,24 @@ const handlePageChange = (page) => {
   getTableData()
 }
 
+const searchPhoneNumber = async() => {
+  currentSearchText.value = searchText.value
+  await getTableData()
+}
+
+const clearSearch = () => {
+  searchText.value = ''
+  currentSearchText.value = ''
+  getTableData() // 重新获取数据，不带搜索条件
+}
+
 // 查询数据
 const getTableData = async() => {
   const table = await getSievenNumberList(
     currentPage.value,
     pageSize.value,
-    route.params.id
+    route.params.id,
+    currentSearchText.value
   )
   if (table.code === 0) {
     table.data.list.forEach((item) => {

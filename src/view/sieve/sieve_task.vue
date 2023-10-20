@@ -3,25 +3,9 @@
     <warning-bar title="注：当前系统处于初始开发阶段时，当前仅支持批量筛号功能" />
     <div class="gva-table-box">
       <div class="gva-btn-list">
-        <!-- 搜索框区域 -->
-        <div class="search-section flex space-x-2">
-          <el-input
-            v-model="searchText"
-            placeholder="请输入任务名称"
-            clearable
-            style="width: 200px;"
-            @clear="clearSearch"
-            @keyup.enter.native="searchTask"
-          />
-          <el-button
-            type="primary"
-            icon="Search"
-            @click="searchTask"
-          >搜索</el-button>
 
-        </div>
         <!-- 按钮区域 -->
-        <div class="button-section ml-auto">
+        <div class="button-section mr-2 ">
           <el-button
             type="primary"
             icon="CirclePlus"
@@ -52,6 +36,23 @@
             icon="refresh"
             @click="getTableData"
           >刷新</el-button>
+        </div>
+        <!-- 搜索框区域 -->
+        <div class="search-section flex space-x-4">
+          <el-input
+            v-model="searchText"
+            placeholder="请输入任务名称"
+            clearable
+            style="width: 200px;"
+            @clear="clearSearch"
+            @keyup.enter.native="searchTask"
+          />
+          <el-button
+            type="primary"
+            icon="Search"
+            @click="searchTask"
+          >搜索</el-button>
+
         </div>
 
       </div>
@@ -134,7 +135,7 @@
         >
           <template #default="scope">
             <el-button
-              icon="edit"
+              icon="Files"
               type="primary"
               link
               @click="$router.push({ name: 'sieve_number', params: { id: scope.row.ID } })"
