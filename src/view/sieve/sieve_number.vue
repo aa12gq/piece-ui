@@ -1,7 +1,7 @@
 <template>
   <div class="authority">
     <warning-bar
-      title="任务筛号列表, 目前为粗粒度版本，后续将开发下载禁用账号、存活账号功能"
+      title="任务筛号列表"
     />
     <div class="gva-table-box">
       <div class="gva-btn-list" />
