@@ -108,9 +108,13 @@
         />
       </el-table>
       <el-pagination
+        :current-page="page"
         :page-size="pageSize"
+        :page-sizes="[10, 30, 50, 100]"
         :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
         @current-change="handlePageChange"
+        @size-change="handleSizeChange"
       />
     </div>
   </div>
@@ -144,6 +148,11 @@ const currentSearchText = ref('')
 // 监听currentPage变化，获取对应页数的数据
 const handlePageChange = (page) => {
   currentPage.value = page
+  getTableData()
+}
+
+const handleSizeChange = (val) => {
+  pageSize.value = val
   getTableData()
 }
 
