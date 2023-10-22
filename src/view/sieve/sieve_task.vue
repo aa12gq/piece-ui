@@ -98,6 +98,26 @@
             </el-button>
           </template>
         </el-table-column>
+        <el-table-column
+          align="left"
+          label="存活数"
+          min-width="180"
+          prop="nonDisabledAccounts"
+        >
+          <template #default="{ row }">
+            {{ row.nonDisabledAccounts }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          align="left"
+          label="禁用数"
+          min-width="180"
+          prop="disabledAccounts"
+        >
+          <template #default="{ row }">
+            {{ row.disabledAccounts }}
+          </template>
+        </el-table-column>
 
         <el-table-column
           align="left"
@@ -107,14 +127,14 @@
         >
           <template #default="{ row }">
             {{ row.totalNumber }}
+            <span v-if="row.nonDisabledAccounts + row.disabledAccounts > 0">
+              ({{ ((Number(row.nonDisabledAccounts) / Number(row.totalNumber)) * 100) }}%)
+            </span>
+            <span v-else>
+              (0%)
+            </span>
           </template>
         </el-table-column>
-        <!-- <el-table-column
-          align="left"
-          label="代理"
-          min-width="180"
-          prop="authorityName"
-        /> -->
         <el-table-column
           align="left"
           label="创建时间"
@@ -324,6 +344,8 @@ const getTableData = async() => {
         item.createdAt = item.createdAt ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss') : ''
         item.updatedAt = item.updatedAt ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
       })
+      console.log('测试', table.data.list)
+
       tableData.value = table.data.list
     }, 100)
     total.value = table.data.total
