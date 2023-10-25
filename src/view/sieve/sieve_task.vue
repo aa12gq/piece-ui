@@ -128,7 +128,7 @@
           <template #default="{ row }">
             {{ row.totalNumber }}
             <span v-if="row.nonDisabledAccounts + row.disabledAccounts > 0">
-              ({{ ((Number(row.nonDisabledAccounts) / Number(row.totalNumber)) * 100) }}%)
+              ({{ Math.floor((Number(row.nonDisabledAccounts) / Number(row.totalNumber)) * 100) }}%)
             </span>
             <span v-else>
               (0%)
@@ -283,7 +283,7 @@ import {
 } from '@/api/sieve'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const drawer2 = ref(false)
@@ -344,9 +344,14 @@ const getTableData = async() => {
         item.createdAt = item.createdAt ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss') : ''
         item.updatedAt = item.updatedAt ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
       })
-      console.log('测试', table.data.list)
 
       tableData.value = table.data.list
+
+      if (shouldAutoRefresh(table.data.list)) {
+        startAutoRefresh()
+      } else {
+        stopAutoRefresh()
+      }
     }, 100)
     total.value = table.data.total
     page.value = table.data.page
@@ -374,6 +379,10 @@ const deleteTask = (row) => {
           page.value--
         }
         getTableData()
+        // 当删除后没有运行中的任务时，停止自动刷新
+        if (!tableData.value.some(item => item.status === 'Running')) {
+          stopAutoRefresh()
+        }
       }
     })
     .catch(() => {
@@ -472,6 +481,8 @@ const submitForm = async() => {
     const response = await createSieveTask(formData)
     if (response && response.code === 0) {
       ElMessage.success('创建成功！')
+      getTableData()
+
       handleClose()
     } else {
       ElMessage.error(response.message || '创建任务失败')
@@ -486,6 +497,39 @@ const resetForm = () => {
     formRef.value.resetFields()
   }
 }
+
+// 开启自动刷新
+let refreshTimer = null
+const startAutoRefresh = () => {
+  if (!refreshTimer) {
+    refreshTimer = setInterval(() => {
+      getTableData()
+    }, 5000)
+  }
+}
+
+// 停止自动刷新
+const stopAutoRefresh = () => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}
+
+const shouldAutoRefresh = (list) => {
+  // 如果列表中存在至少一个状态为 'Running' 的项，则返回true
+  return list.some(item => item.status === 'Running')
+}
+
+onMounted(() => {
+  // 定义定时器，每十秒刷新数据
+  startAutoRefresh()
+
+  // 当用户离开页面时清除定时器
+  window.addEventListener('beforeunload', () => {
+    stopAutoRefresh()
+  })
+})
 </script>
 
 <style lang="scss">
