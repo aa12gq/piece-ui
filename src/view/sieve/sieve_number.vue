@@ -276,6 +276,8 @@ const getStatusButtonType = (status) => {
       return '存活'
     case 'Disable':
       return '禁用'
+    case 'Permanent':
+      return '永久'
     default:
       return ''
   }
@@ -284,6 +286,8 @@ const getStatusButtonType = (status) => {
 const getButtonType = (status) => {
   switch (status) {
     case 'Disable':
+      return 'danger'
+    case 'Permanent':
       return 'danger'
     case 'Normal':
       return 'success'
