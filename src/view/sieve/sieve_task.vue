@@ -484,11 +484,9 @@ const submitForm = async() => {
       getTableData()
 
       handleClose()
-    } else {
-      ElMessage.error(response.message || '创建任务失败')
     }
   } catch (error) {
-    ElMessage.error(error.message || '创建任务失败')
+    ElMessage.error(error.message)
   }
 }
 
