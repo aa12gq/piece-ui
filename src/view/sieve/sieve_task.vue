@@ -121,7 +121,7 @@
 
         <el-table-column
           align="left"
-          label="总数"
+          label="总数(存活率)"
           min-width="180"
           prop="totalNumber"
         >

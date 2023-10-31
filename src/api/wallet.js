@@ -6,3 +6,10 @@ export const getUserWalletList = (page, pageSize, name) => {
     method: 'get',
   })
 }
+
+export const getUserConsumptionList = (page, pageSize, name) => {
+  return service({
+    url: `/userConsumption/getUserConsumptionList?page=${page}&pageSize=${pageSize}&name=${name}`,
+    method: 'get',
+  })
+}

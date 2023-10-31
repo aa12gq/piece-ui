@@ -1,9 +1,10 @@
 <template>
   <div class="authority">
-    <warning-bar title="注:用户钱包列表" />
+    <warning-bar
+      title="注：您的交易记录"
+    />
     <div class="gva-table-box">
       <div class="gva-btn-list">
-
         <!-- 按钮区域 -->
         <!-- 搜索框区域 -->
         <div class="search-section flex space-x-4">
@@ -11,7 +12,7 @@
             v-model="searchText"
             placeholder="请输入用户名"
             clearable
-            style="width: 200px;"
+            style="width: 200px"
             @clear="clearSearch"
             @keyup.enter.native="searchTask"
           />
@@ -26,7 +27,6 @@
             @click="getTableData"
           >刷新</el-button>
         </div>
-
       </div>
 
       <el-table
@@ -60,19 +60,17 @@
         />
         <el-table-column
           align="left"
-          label="状态"
+          label="交易金额"
           min-width="180"
-        >
-          <template #default="{ row }">
-            <el-button
-              :type="row.status = '正常' ? 'success' : 'danger'"
-              size="small"
-              plain
-            >
-              {{ row.Status }}
-            </el-button>
-          </template>
-        </el-table-column>
+          prop="amount"
+        />
+
+        <el-table-column
+          align="left"
+          label="交易描述"
+          min-width="180"
+          prop="description"
+        />
 
         <el-table-column
           align="left"
@@ -109,7 +107,6 @@
         :rules="rules"
         label-width="120px"
       >
-
         <el-form-item
           label="任务名称"
           prop="taskName"
@@ -142,7 +139,6 @@
           >提交</el-button>
           <el-button @click="resetForm">重置</el-button>
         </el-form-item>
-
       </el-form>
     </el-drawer>
     <el-drawer
@@ -180,7 +176,7 @@
 </template>
 
 <script setup>
-import { getUserWalletList } from '@/api/wallet'
+import { getUserConsumptionList } from '@/api/wallet'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
 import { ref } from 'vue'
@@ -200,8 +196,7 @@ function confirmClick() {
     .then(() => {
       drawer2.value = false
     })
-    .catch(() => {
-    })
+    .catch(() => {})
 }
 
 const drawer = ref(false)
@@ -236,13 +231,21 @@ const clearSearch = () => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getUserWalletList(page.value, pageSize.value, currentSearchText.value)
+  const table = await getUserConsumptionList(
+    page.value,
+    pageSize.value,
+    currentSearchText.value
+  )
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
       table.data.list.forEach((item) => {
-        item.CreatedAt = item.CreatedAt ? formatTimeToStr(item.CreatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
-        item.UpdatedAt = item.UpdatedAt ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
+        item.CreatedAt = item.CreatedAt
+          ? formatTimeToStr(item.CreatedAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
+        item.UpdatedAt = item.UpdatedAt
+          ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
       })
 
       console.log('测试', table.data)
@@ -270,19 +273,18 @@ const handleUploadChange = (file, fileListUpdated) => {
 }
 </script>
 
-  <style lang="scss">
-  .authority {
-    .el-input-number {
-      margin-left: 15px;
-      span {
-        display: none;
-      }
+<style lang="scss">
+.authority {
+  .el-input-number {
+    margin-left: 15px;
+    span {
+      display: none;
     }
   }
-  .tree-content {
-    margin-top: 10px;
-    height: calc(100vh - 158px);
-    overflow: auto;
-  }
-  </style>
-
+}
+.tree-content {
+  margin-top: 10px;
+  height: calc(100vh - 158px);
+  overflow: auto;
+}
+</style>

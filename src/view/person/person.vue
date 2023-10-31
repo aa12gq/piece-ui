@@ -84,7 +84,7 @@
                     <el-icon>
                       <medal />
                     </el-icon>
-                    GoLang/JavaScript/Vue/Gorm
+                    Golang
                   </li>
                 </el-tooltip>
               </ul>
