@@ -13,3 +13,17 @@ export const getUserConsumptionList = (page, pageSize, name) => {
     method: 'get',
   })
 }
+
+export const getUserWalletBalance = (id) => {
+  return service({
+    url: `/userWallet/getUserWalletBalance?id=id`,
+    method: 'get',
+  })
+}
+
+export const getMyWalletBalance = () => {
+  return service({
+    url: `/userWallet/getMyWalletBalance`,
+    method: 'get',
+  })
+}
