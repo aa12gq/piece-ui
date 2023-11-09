@@ -23,6 +23,21 @@ export const findSieveTask = (id) => {
   })
 }
 
+export const recoverTask = (id) => {
+  console.log(id)
+  return service({
+    url: `/sieveTask/recoverTask/${id}`,
+    method: 'post',
+  })
+}
+export const pauseTask = (id) => {
+  console.log(id)
+  return service({
+    url: `/sieveTask/pauseTask/${id}`,
+    method: 'post',
+  })
+}
+
 export const deleteSieveTask = (data) => {
   return service({
     url: `/sieveTask/deleteSieveTask`,

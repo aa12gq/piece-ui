@@ -75,7 +75,7 @@
           align="left"
           label="状态"
           min-width="180"
-          prop="status"
+          prop="Status"
         >
           <template #default="{ row }">
             <el-button

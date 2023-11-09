@@ -251,7 +251,6 @@
           </el-button>
 
           <el-button
-            type="warning"
             icon="RefreshLeft"
             class="w-[7rem] rounded"
             @click="resetForm"

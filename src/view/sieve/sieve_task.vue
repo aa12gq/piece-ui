@@ -1,11 +1,12 @@
 <template>
   <div class="authority">
-    <warning-bar title="注：当前系统处于初始开发阶段时，当前仅支持批量筛号功能" />
+    <warning-bar
+      title="注：当前系统处于初始开发阶段时，当前仅支持批量筛号功能"
+    />
     <div class="gva-table-box">
       <div class="gva-btn-list">
-
         <!-- 按钮区域 -->
-        <div class="button-section mr-2 ">
+        <div class="button-section mr-2">
           <el-button
             type="primary"
             icon="CirclePlus"
@@ -43,7 +44,7 @@
             v-model="searchText"
             placeholder="请输入任务名称"
             clearable
-            style="width: 200px;"
+            style="width: 200px"
             @clear="clearSearch"
             @keyup.enter.native="searchTask"
           />
@@ -52,9 +53,7 @@
             icon="Search"
             @click="searchTask"
           >搜索</el-button>
-
         </div>
-
       </div>
 
       <el-table
@@ -89,7 +88,7 @@
             <el-button
               :type="getButtonType(row.status)"
               size="small"
-              :loading-icon="Eleme"
+              loading-icon="Eleme"
               :loading="row.status == 'Running'"
               :icon="getButtonIcon(row.status)"
               plain
@@ -128,11 +127,14 @@
           <template #default="{ row }">
             {{ row.totalNumber }}
             <span v-if="row.nonDisabledAccounts + row.disabledAccounts > 0">
-              ({{ Math.floor((Number(row.nonDisabledAccounts) / Number(row.totalNumber)) * 100) }}%)
+              ({{
+                Math.floor(
+                  (Number(row.nonDisabledAccounts) / Number(row.totalNumber)) *
+                    100
+                )
+              }}%)
             </span>
-            <span v-else>
-              (0%)
-            </span>
+            <span v-else> (0%) </span>
           </template>
         </el-table-column>
         <el-table-column
@@ -150,36 +152,61 @@
         <el-table-column
           align="left"
           label="操作"
-          width="150"
+          width="250"
           fixed="right"
         >
           <template #default="scope">
-            <el-button
-              icon="Files"
-              type="primary"
-              link
-              @click="$router.push({ name: 'sieve_number', params: { id: scope.row.ID } })"
-            >详情</el-button>
-            <!-- <el-button
-              v-if="scope.row.status === 'Pause'"
-              type="info"
-              icon="VideoPause"
-              link
-            >恢复</el-button>
+            <!-- Button Group Container -->
+            <div class="button-group">
+              <!-- 详情 Button -->
+              <el-button
+                icon="Files"
+                type="primary"
+                link
+                @click="
+                  $router.push({
+                    name: 'sieve_number',
+                    params: { id: scope.row.ID },
+                  })
+                "
+              >详情</el-button>
 
-            <el-button
-              v-if="scope.row.status === 'Running'"
-              type="danger"
-              icon="VideoPlay"
-              link
-            >暂停</el-button> -->
+              <!-- 删除 Button -->
+              <el-button
+                icon="delete"
+                type="primary"
+                link
+                @click="deleteTask(scope.row)"
+              >删除</el-button>
 
-            <el-button
-              icon="delete"
-              type="primary"
-              link
-              @click="deleteTask(scope.row)"
-            >删除</el-button>
+              <!-- 更多操作 Dropdown -->
+              <el-dropdown
+                trigger="click"
+                class="el-button-like"
+              >
+                <el-button
+                  class="button-with-icon-right"
+                  type="primary"
+                  link
+                  icon="More"
+                >更多操作</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      v-if="scope.row.status === 'Pause'"
+                      @click.native="openRecover(scope.row)"
+                    >恢复</el-dropdown-item>
+                    <el-dropdown-item
+                      v-if="scope.row.status === 'Running'"
+                      @click.native="openPause(scope.row)"
+                    >暂停</el-dropdown-item>
+                    <el-dropdown-item
+                      v-if="!scope.row.status || (scope.row.status !== 'Pause' && scope.row.status !== 'Running')"
+                    >什么都没有</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -205,7 +232,6 @@
         :rules="rules"
         label-width="120px"
       >
-
         <el-form-item
           label="任务名称"
           prop="taskName"
@@ -213,6 +239,20 @@
           <el-input
             v-model="form.taskName"
             autocomplete="off"
+            placeholder="请输入任务名称"
+          />
+        </el-form-item>
+        <el-form-item
+          label="并发数"
+          prop="concurrency"
+        >
+          <el-input
+            v-model.number="form.concurrency"
+            type="number"
+            placeholder="并发数"
+            :min="1"
+            :max="1000"
+            style="width: 100%"
           />
         </el-form-item>
 
@@ -234,11 +274,16 @@
         <el-form-item>
           <el-button
             type="primary"
+            icon="Position"
+            class="w-[7rem] rounded"
             @click="submitForm"
           >提交</el-button>
-          <el-button @click="resetForm">重置</el-button>
+          <el-button
+            icon="RefreshLeft"
+            class="w-[7rem] rounded"
+            @click="resetForm"
+          >重置</el-button>
         </el-form-item>
-
       </el-form>
     </el-drawer>
     <el-drawer
@@ -280,6 +325,8 @@ import {
   getSieveTaskList,
   createSieveTask,
   deleteSieveTask,
+  pauseTask,
+  recoverTask
 } from '@/api/sieve'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
@@ -300,8 +347,7 @@ function confirmClick() {
     .then(() => {
       drawer2.value = false
     })
-    .catch(() => {
-    })
+    .catch(() => {})
 }
 
 const drawer = ref(false)
@@ -336,13 +382,21 @@ const clearSearch = () => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getSieveTaskList(page.value, pageSize.value, currentSearchText.value)
+  const table = await getSieveTaskList(
+    page.value,
+    pageSize.value,
+    currentSearchText.value
+  )
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
       table.data.list.forEach((item) => {
-        item.createdAt = item.createdAt ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss') : ''
-        item.updatedAt = item.updatedAt ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
+        item.createdAt = item.createdAt
+          ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
+        item.updatedAt = item.updatedAt
+          ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
       })
 
       tableData.value = table.data.list
@@ -380,7 +434,7 @@ const deleteTask = (row) => {
         }
         getTableData()
         // 当删除后没有运行中的任务时，停止自动刷新
-        if (!tableData.value.some(item => item.status === 'Running')) {
+        if (!tableData.value.some((item) => item.status === 'Running')) {
           stopAutoRefresh()
         }
       }
@@ -459,12 +513,18 @@ const handleUploadChange = (file, fileListUpdated) => {
 
 const form = reactive({
   taskName: '',
+  concurrency: 0,
   file: null,
+  immediate: true, // 默认为立即开始
 })
 
 const rules = {
   taskName: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
   file: [{ required: true, message: '请上传文件', trigger: 'change' }],
+  concurrency: [
+    { required: true, message: '请输入并发数', trigger: 'blur' },
+    { type: 'number', message: '并发数必须为数字值', trigger: 'blur' },
+  ],
 }
 
 const submitForm = async() => {
@@ -473,6 +533,9 @@ const submitForm = async() => {
 
   const formData = new FormData()
   formData.append('taskName', form.taskName)
+  formData.append('concurrency', form.concurrency)
+  formData.append('immediate', form.immediate)
+
   if (form.file) {
     formData.append('file', form.file, form.file.name)
   }
@@ -516,7 +579,7 @@ const stopAutoRefresh = () => {
 
 const shouldAutoRefresh = (list) => {
   // 如果列表中存在至少一个状态为 'Running' 的项，则返回true
-  return list.some(item => item.status === 'Running')
+  return list.some((item) => item.status === 'Running')
 }
 
 onMounted(() => {
@@ -528,6 +591,83 @@ onMounted(() => {
     stopAutoRefresh()
   })
 })
+
+const openPause = (row) => {
+  ElMessageBox.confirm(
+    `您确定要暂停"${row.taskName}"吗`,
+    '提示',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  )
+    .then(async () => {
+      const res = await pauseTask(row.ID)
+      if (res.code === 0) {
+        ElMessage({
+          type: 'success',
+          message: '暂停成功',
+        })
+        getTableData()
+      } else {
+        ElMessage({
+          type: 'error',
+          message: res.data.message || '暂停任务失败',
+        })
+      }
+      getTableData()
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '操作已取消',
+      })
+    })
+}
+
+const openRecover = (row) => {
+  ElMessageBox.confirm(
+    `您确定要恢复"${row.taskName}"吗`,
+    '提示',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  )
+    .then(async() => {
+      try {
+        const res = await recoverTask(row.ID)
+        console.log('测试', res)
+        if (res.code === 0) {
+          ElMessage({
+            type: 'success',
+            message: `任务 "${row.taskName}" 恢复成功!`,
+          })
+          getTableData()
+        } else {
+          ElMessage({
+            type: 'error',
+            message: res.data.message || '恢复任务失败',
+          })
+        }
+      } catch (error) {
+        if (error && error.response) {
+          ElMessage({
+            type: 'error',
+            message: error.response.data.message || '请求失败',
+          })
+        } else {
+          // 用户取消操作不弹出提示
+        }
+      }
+    })
+    .catch(() => {
+      // 用户取消操作不弹出提示
+    })
+}
+
 </script>
 
 <style lang="scss">
@@ -544,4 +684,30 @@ onMounted(() => {
   height: calc(100vh - 158px);
   overflow: auto;
 }
+
+.button-group {
+  display: flex;
+  align-items: center;
+}
+
+.el-button-like {
+  line-height: normal;
+  color: #409EFF;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.el-button-like .el-button {
+  padding: 0;
+  margin-right: 10px;
+}
+
+.el-button-like .el-button:focus,
+.el-button-like .el-button:hover {
+  color: #66b1ff;
+  background: none;
+  border-color: transparent;
+}
+
 </style>
