@@ -51,7 +51,18 @@
           label="UUID"
           min-width="180"
           prop="UserUUID"
-        />
+        >
+          <template #default="scope">
+            <el-tooltip
+              class="item"
+              effect="dark"
+              :content="scope.row.UserUUID"
+              placement="top"
+            >
+              <div class="text-ellipsis">{{ scope.row.UserUUID.length > 10 ? scope.row.UserUUID.substr(0, 10) + '...' : scope.row.UserUUID }}</div>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
           label="用户"
@@ -73,6 +84,12 @@
             </el-button>
           </template>
         </el-table-column>
+        <el-table-column
+          align="left"
+          label="余额"
+          min-width="180"
+          prop="balance"
+        />
 
         <el-table-column
           align="left"
@@ -245,7 +262,6 @@ const getTableData = async() => {
         item.UpdatedAt = item.UpdatedAt ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss') : ''
       })
 
-      console.log('测试', table.data)
       tableData.value = table.data.list
     }, 100)
     total.value = table.data.total

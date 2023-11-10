@@ -1,7 +1,7 @@
 <template>
   <div class="authority">
     <warning-bar
-      title="注：当前系统处于初始开发阶段时，当前仅支持批量筛号功能"
+      title="注：批量筛号"
     />
     <div class="gva-table-box">
       <div class="gva-btn-list">
@@ -139,15 +139,17 @@
         </el-table-column>
         <el-table-column
           align="left"
-          label="创建时间"
+          label="提交时间"
           min-width="180"
           prop="createdAt"
+          sortable="custom"
         />
         <el-table-column
           align="left"
           label="更新时间"
           min-width="180"
           prop="updatedAt"
+          sortable="custom"
         />
         <el-table-column
           align="left"
@@ -185,7 +187,7 @@
                 class="el-button-like"
               >
                 <el-button
-                  class="button-with-icon-right"
+                  class="button-with-icon-right ml-3"
                   type="primary"
                   link
                   icon="More"
@@ -449,6 +451,8 @@ const deleteTask = (row) => {
 
 const getStatusButtonType = (status) => {
   switch (status) {
+    case 'Init':
+      return '初始化'
     case 'Pending':
       return '等待'
     case 'Success':
@@ -463,9 +467,10 @@ const getStatusButtonType = (status) => {
       return ''
   }
 }
-
 const getButtonType = (status) => {
   switch (status) {
+    case 'Init':
+      return 'info'
     case 'Pending':
       return 'warning'
     case 'Success':
@@ -480,9 +485,10 @@ const getButtonType = (status) => {
       return ''
   }
 }
-
 const getButtonIcon = (status) => {
   switch (status) {
+    case 'Init':
+      return 'el-icon-setting'
     case 'Pending':
       return 'el-icon-clock'
     case 'Success':
@@ -543,7 +549,7 @@ const submitForm = async() => {
   try {
     const response = await createSieveTask(formData)
     if (response && response.code === 0) {
-      ElMessage.success('创建成功！')
+      ElMessage.success('提交成功！')
       getTableData()
 
       handleClose()
@@ -602,14 +608,16 @@ const openPause = (row) => {
       type: 'warning',
     }
   )
-    .then(async () => {
+    .then(async() => {
       const res = await pauseTask(row.ID)
       if (res.code === 0) {
         ElMessage({
           type: 'success',
           message: '暂停成功',
         })
-        getTableData()
+        setTimeout(() => {
+          getTableData()
+        }, 500)
       } else {
         ElMessage({
           type: 'error',
@@ -645,7 +653,9 @@ const openRecover = (row) => {
             type: 'success',
             message: `任务 "${row.taskName}" 恢复成功!`,
           })
+          setTimeout(() => {
           getTableData()
+        }, 3000)
         } else {
           ElMessage({
             type: 'error',
