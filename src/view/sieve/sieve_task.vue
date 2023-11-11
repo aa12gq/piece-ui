@@ -221,7 +221,7 @@
                       @click="downloadNormal(scope.row)"
                     >下载存活账号</el-dropdown-item>
                     <el-dropdown-item
-                      v-if="scope.row.DisabledAccounts > 1"
+                      v-if="scope.row.disabledAccounts > 1"
                       @click="downloadDisable(scope.row)"
                     >下载禁用账号</el-dropdown-item>
                   </el-dropdown-menu>
