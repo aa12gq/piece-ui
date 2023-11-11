@@ -6,12 +6,8 @@
     <div class="gva-table-box">
       <div class="gva-btn-list">
         <!-- 按钮区域 -->
-        <div class="button-section mr-2">
-          <el-button
-            type="primary"
-            icon="CirclePlus"
-            @click="drawer = true"
-          >新建任务</el-button>
+        <div class="button-section ">
+
           <el-tooltip
             class="box-item"
             effect="dark"
@@ -32,14 +28,9 @@
             placement="top-start"
           />
 
-          <el-button
-            type="primary"
-            icon="refresh"
-            @click="getTableData"
-          >刷新</el-button>
         </div>
         <!-- 搜索框区域 -->
-        <div class="search-section flex space-x-4">
+        <div class="search-section flex space-x-4 -ml-2">
           <el-input
             v-model="searchText"
             placeholder="请输入任务名称"
@@ -54,6 +45,17 @@
             @click="searchTask"
           >搜索</el-button>
         </div>
+        <el-button
+
+          icon="refresh"
+          @click="getTableData"
+        >刷新</el-button>
+        <el-button
+          type="primary"
+          icon="CirclePlus"
+          class="ml-auto mr-4"
+          @click="drawer = true"
+        >新建任务</el-button>
       </div>
 
       <el-table
@@ -61,6 +63,8 @@
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         row-key="authorityId"
         style="width: 100%"
+        :show-summary="true"
+        @sort-change="handleSortChange"
       >
         <el-table-column
           label="ID"
@@ -97,12 +101,7 @@
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column
-          align="left"
-          label="并发数"
-          min-width="180"
-          prop="concurrency"
-        />
+
         <el-table-column
           align="left"
           label="正常账号数量"
@@ -148,6 +147,12 @@
 
           </template>
         </el-table-column>
+        <el-table-column
+          align="left"
+          label="并发数"
+          min-width="180"
+          prop="concurrency"
+        />
         <el-table-column
           align="left"
           label="提交时间"
@@ -230,6 +235,7 @@
             </div>
           </template>
         </el-table-column>
+
       </el-table>
       <el-pagination
         :current-page="page"
@@ -404,12 +410,15 @@ const clearSearch = () => {
 }
 
 // 查询
-const getTableData = async() => {
-  const table = await getSieveTaskList(
-    page.value,
-    pageSize.value,
-    currentSearchText.value
-  )
+const getTableData = async(sortProp, sortOrder) => {
+  const table = await getSieveTaskList({
+    page: page.value,
+    pageSize: pageSize.value,
+    taskName: currentSearchText.value,
+    sort: sortProp,
+    order: sortOrder
+  })
+  console.log(table);
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
@@ -423,6 +432,7 @@ const getTableData = async() => {
       })
 
       tableData.value = table.data.list
+     
 
       if (shouldAutoRefresh(table.data.list)) {
         startAutoRefresh()
@@ -438,9 +448,27 @@ const getTableData = async() => {
 
 getTableData()
 
+const handleSortChange = ({ prop, order }) => {
+  if (!order) {
+    order = null
+    prop = null
+  } else {
+    order = order === 'ascending' ? 'asc' : 'desc'
+    prop = prop ? camelToSnake(prop) : null // 将 prop 从 camelCase 转换为 snake_case
+  }
+
+  getTableData(prop, order)
+}
+
+function camelToSnake(string) {
+  return string.replace(/[\w]([A-Z])/g, function(m) {
+    return m[0] + '_' + m[1]
+  }).toLowerCase()
+}
+
 // 删除任务
 const deleteTask = (row) => {
-  ElMessageBox.confirm('此操作将永久删除该任务, 是否继续?', '提示', {
+  ElMessageBox.confirm('此操作将永久删除该任务及相关账号, 是否继续?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
@@ -699,66 +727,44 @@ const openRecover = (row) => {
     })
 }
 
-// 下载禁用账号
-const downloadDisable = async(row) => {
+// 通用的下载文件函数
+const downloadFile = async(downloadFunc, row, fileName, delay = 3000) => {
   try {
-    const response = await downloadDisableAccounts(row.ID)
-    // 检查响应是否有效和存在数据
+    ElMessage.info('准备下载，请稍候...')
+    const response = await downloadFunc(row.ID)
+
     if (response && response.data) {
-      console.log('开始下载禁用账号', response)
+      console.log(`开始下载 ${fileName}`, response)
+      const blob = new Blob([response.data], { type: 'text/plain' })
 
-      // 使用文件流创建一个Blob对象
-      const blob = new Blob([response.data], { type: 'text/plain' }) // 可根据实际返回的内容类型调整
-
-      // 创建一个链接并触发下载
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', 'disable_accounts.txt') // 设置下载文件的名字
-      document.body.appendChild(link)
-      link.click()
-
-      // 清理
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
+      setTimeout(() => { // 延迟下载
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', fileName)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        ElMessage.success('下载成功')
+      }, delay)
     } else {
-      ElMessage.error('下载禁用账号失败：没有数据返回')
+      ElMessage.error(`下载 ${fileName} 失败：没有数据返回`)
     }
   } catch (error) {
+    ElMessage.error('下载出错')
     console.error('下载出错', error)
   }
 }
 
+// 下载禁用账号
+const downloadDisable = async(row) => {
+  await downloadFile(downloadDisableAccounts, row, '禁用账号.txt')
+}
+
 // 下载存活账号
 const downloadNormal = async(row) => {
-  try {
-    const response = await downloadNormalAccounts(row.ID)
-
-    // 检查响应是否有效和存在数据
-    if (response && response.data) {
-      console.log('开始下载存活账号', response)
-
-      // 使用文件流创建一个Blob对象
-      const blob = new Blob([response.data], { type: 'text/plain' }) // 可根据实际返回的内容类型调整
-
-      // 创建一个链接并触发下载
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', 'normal_accounts.txt') // 设置下载文件的名字
-      document.body.appendChild(link)
-      link.click()
-
-      // 清理
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    } else {
-      console.error('下载存活账号失败：没有数据返回')
-    }
-  } catch (error) {
-    ElMessage.error(error || '下载出错')
-    console.error('下载出错', error)
-  }
+  await downloadFile(downloadNormalAccounts, row, '正常账号.txt')
 }
 
 </script>
