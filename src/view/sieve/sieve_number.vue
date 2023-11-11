@@ -25,13 +25,13 @@
             icon="Download"
             :disabled="!$route.params.id || $route.params.id === 0"
             @click="downloadNormal"
-          >下载存活账号</el-button>
+          >导出存活账号</el-button>
           <el-button
             type="primary"
             icon="Download"
             :disabled="!$route.params.id || $route.params.id === 0"
             @click="downloadDisable"
-          >下载禁用账号</el-button>
+          >导出禁用账号</el-button>
           <el-button
             color="#626aef"
             icon="refresh"

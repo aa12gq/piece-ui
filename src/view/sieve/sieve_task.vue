@@ -99,33 +99,18 @@
         </el-table-column>
         <el-table-column
           align="left"
-          label="存活数"
+          label="并发数"
+          min-width="180"
+          prop="concurrency"
+        />
+        <el-table-column
+          align="left"
+          label="正常账号数量"
           min-width="180"
           prop="nonDisabledAccounts"
         >
           <template #default="{ row }">
             {{ row.nonDisabledAccounts }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          align="left"
-          label="禁用数"
-          min-width="180"
-          prop="disabledAccounts"
-        >
-          <template #default="{ row }">
-            {{ row.disabledAccounts }}
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          align="left"
-          label="总数(存活率)"
-          min-width="180"
-          prop="totalNumber"
-        >
-          <template #default="{ row }">
-            {{ row.totalNumber }}
             <span v-if="row.nonDisabledAccounts + row.disabledAccounts > 0">
               ({{
                 Math.floor(
@@ -135,6 +120,32 @@
               }}%)
             </span>
             <span v-else> (0%) </span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          align="left"
+          label="禁用账号数量"
+          min-width="180"
+          prop="disabledAccounts"
+        >
+          <template #default="{ row }">
+            {{ row.disabledAccounts }}
+            <span v-if="row.totalNumber > 0">
+              ({{ Math.floor((row.disabledAccounts / row.totalNumber * 100).toFixed(2),100) }}%)
+            </span>
+            <span v-else>0%</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          align="left"
+          label="总数"
+          min-width="180"
+          prop="totalNumber"
+        >
+          <template #default="{ row }">
+            {{ row.totalNumber }}
+
           </template>
         </el-table-column>
         <el-table-column
@@ -203,8 +214,16 @@
                       @click.native="openPause(scope.row)"
                     >暂停</el-dropdown-item>
                     <el-dropdown-item
-                      v-if="!scope.row.status || (scope.row.status !== 'Pause' && scope.row.status !== 'Running')"
+                      v-if="scope.row.nonDisabledAccounts > 0 && scope.row.DisabledAccounts > 0"
                     >什么都没有</el-dropdown-item>
+                    <el-dropdown-item
+                      v-if="scope.row.nonDisabledAccounts > 1"
+                      @click="downloadNormal(scope.row)"
+                    >下载存活账号</el-dropdown-item>
+                    <el-dropdown-item
+                      v-if="scope.row.DisabledAccounts > 1"
+                      @click="downloadDisable(scope.row)"
+                    >下载禁用账号</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -328,7 +347,9 @@ import {
   createSieveTask,
   deleteSieveTask,
   pauseTask,
-  recoverTask
+  recoverTask,
+  downloadDisableAccounts,
+  downloadNormalAccounts,
 } from '@/api/sieve'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
@@ -488,7 +509,7 @@ const getButtonType = (status) => {
 const getButtonIcon = (status) => {
   switch (status) {
     case 'Init':
-      return 'el-icon-setting'
+      return 'el-icon-help-filled'
     case 'Pending':
       return 'el-icon-clock'
     case 'Success':
@@ -654,8 +675,8 @@ const openRecover = (row) => {
             message: `任务 "${row.taskName}" 恢复成功!`,
           })
           setTimeout(() => {
-          getTableData()
-        }, 3000)
+            getTableData()
+          }, 3000)
         } else {
           ElMessage({
             type: 'error',
@@ -676,6 +697,68 @@ const openRecover = (row) => {
     .catch(() => {
       // 用户取消操作不弹出提示
     })
+}
+
+// 下载禁用账号
+const downloadDisable = async(row) => {
+  try {
+    const response = await downloadDisableAccounts(row.ID)
+    // 检查响应是否有效和存在数据
+    if (response && response.data) {
+      console.log('开始下载禁用账号', response)
+
+      // 使用文件流创建一个Blob对象
+      const blob = new Blob([response.data], { type: 'text/plain' }) // 可根据实际返回的内容类型调整
+
+      // 创建一个链接并触发下载
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'disable_accounts.txt') // 设置下载文件的名字
+      document.body.appendChild(link)
+      link.click()
+
+      // 清理
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } else {
+      ElMessage.error('下载禁用账号失败：没有数据返回')
+    }
+  } catch (error) {
+    console.error('下载出错', error)
+  }
+}
+
+// 下载存活账号
+const downloadNormal = async(row) => {
+  try {
+    const response = await downloadNormalAccounts(row.ID)
+
+    // 检查响应是否有效和存在数据
+    if (response && response.data) {
+      console.log('开始下载存活账号', response)
+
+      // 使用文件流创建一个Blob对象
+      const blob = new Blob([response.data], { type: 'text/plain' }) // 可根据实际返回的内容类型调整
+
+      // 创建一个链接并触发下载
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'normal_accounts.txt') // 设置下载文件的名字
+      document.body.appendChild(link)
+      link.click()
+
+      // 清理
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } else {
+      console.error('下载存活账号失败：没有数据返回')
+    }
+  } catch (error) {
+    ElMessage.error(error || '下载出错')
+    console.error('下载出错', error)
+  }
 }
 
 </script>
