@@ -90,12 +90,6 @@
         </el-table-column>
         <el-table-column
           align="left"
-          label="任务ID"
-          min-width="180"
-          prop="task_id"
-        />
-        <el-table-column
-          align="left"
           label="创建时间"
           min-width="180"
           prop="createdAt"

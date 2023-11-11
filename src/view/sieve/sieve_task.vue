@@ -1,13 +1,10 @@
 <template>
   <div class="authority">
-    <warning-bar
-      title="注：批量筛号"
-    />
+    <warning-bar title="注：批量筛号" />
     <div class="gva-table-box">
       <div class="gva-btn-list">
         <!-- 按钮区域 -->
-        <div class="button-section ">
-
+        <div class="button-section">
           <el-tooltip
             class="box-item"
             effect="dark"
@@ -27,7 +24,6 @@
             content="暂未开发，敬请期待"
             placement="top-start"
           />
-
         </div>
         <!-- 搜索框区域 -->
         <div class="search-section flex space-x-4 -ml-2">
@@ -46,7 +42,6 @@
           >搜索</el-button>
         </div>
         <el-button
-
           icon="refresh"
           @click="getTableData"
         >刷新</el-button>
@@ -130,7 +125,12 @@
           <template #default="{ row }">
             {{ row.disabledAccounts }}
             <span v-if="row.totalNumber > 0">
-              ({{ Math.floor((row.disabledAccounts / row.totalNumber * 100).toFixed(2),100) }}%)
+              ({{
+                Math.floor(
+                  ((row.disabledAccounts / row.totalNumber) * 100).toFixed(2),
+                  100
+                )
+              }}%)
             </span>
             <span v-else>0%</span>
           </template>
@@ -144,7 +144,6 @@
         >
           <template #default="{ row }">
             {{ row.totalNumber }}
-
           </template>
         </el-table-column>
         <el-table-column
@@ -219,7 +218,10 @@
                       @click.native="openPause(scope.row)"
                     >暂停</el-dropdown-item>
                     <el-dropdown-item
-                      v-if="scope.row.nonDisabledAccounts > 0 && scope.row.DisabledAccounts > 0"
+                      v-if="
+                        scope.row.nonDisabledAccounts > 0 &&
+                          scope.row.DisabledAccounts > 0
+                      "
                     >什么都没有</el-dropdown-item>
                     <el-dropdown-item
                       v-if="scope.row.nonDisabledAccounts > 1"
@@ -235,7 +237,6 @@
             </div>
           </template>
         </el-table-column>
-
       </el-table>
       <el-pagination
         :current-page="page"
@@ -416,9 +417,8 @@ const getTableData = async(sortProp, sortOrder) => {
     pageSize: pageSize.value,
     taskName: currentSearchText.value,
     sort: sortProp,
-    order: sortOrder
+    order: sortOrder,
   })
-  console.log(table);
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
@@ -432,7 +432,6 @@ const getTableData = async(sortProp, sortOrder) => {
       })
 
       tableData.value = table.data.list
-     
 
       if (shouldAutoRefresh(table.data.list)) {
         startAutoRefresh()
@@ -461,9 +460,11 @@ const handleSortChange = ({ prop, order }) => {
 }
 
 function camelToSnake(string) {
-  return string.replace(/[\w]([A-Z])/g, function(m) {
-    return m[0] + '_' + m[1]
-  }).toLowerCase()
+  return string
+    .replace(/[\w]([A-Z])/g, function(m) {
+      return m[0] + '_' + m[1]
+    })
+    .toLowerCase()
 }
 
 // 删除任务
@@ -648,15 +649,11 @@ onMounted(() => {
 })
 
 const openPause = (row) => {
-  ElMessageBox.confirm(
-    `您确定要暂停"${row.taskName}"吗`,
-    '提示',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    }
-  )
+  ElMessageBox.confirm(`您确定要暂停"${row.taskName}"吗`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
     .then(async() => {
       const res = await pauseTask(row.ID)
       if (res.code === 0) {
@@ -684,15 +681,11 @@ const openPause = (row) => {
 }
 
 const openRecover = (row) => {
-  ElMessageBox.confirm(
-    `您确定要恢复"${row.taskName}"吗`,
-    '提示',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    }
-  )
+  ElMessageBox.confirm(`您确定要恢复"${row.taskName}"吗`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
     .then(async() => {
       try {
         const res = await recoverTask(row.ID)
@@ -737,7 +730,8 @@ const downloadFile = async(downloadFunc, row, fileName, delay = 3000) => {
       console.log(`开始下载 ${fileName}`, response)
       const blob = new Blob([response.data], { type: 'text/plain' })
 
-      setTimeout(() => { // 延迟下载
+      setTimeout(() => {
+        // 延迟下载
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
@@ -766,7 +760,6 @@ const downloadDisable = async(row) => {
 const downloadNormal = async(row) => {
   await downloadFile(downloadNormalAccounts, row, '正常账号.txt')
 }
-
 </script>
 
 <style lang="scss">
@@ -791,7 +784,7 @@ const downloadNormal = async(row) => {
 
 .el-button-like {
   line-height: normal;
-  color: #409EFF;
+  color: #409eff;
   padding: 0;
   border: none;
   background: none;
@@ -808,5 +801,4 @@ const downloadNormal = async(row) => {
   background: none;
   border-color: transparent;
 }
-
 </style>
