@@ -3,10 +3,10 @@
     id="userLayout"
     class="w-full h-full relative"
   >
-    <div class="rounded-lg flex items-center justify-evenly w-full h-full bg-white md:w-screen md:h-screen md:bg-[#194bfb]">
+    <div class="rounded-lg flex items-center justify-evenly w-full h-full bg-white md:w-screen md:h-screen md:bg-[#3e67fc]">
 
       <!-- 背景图像部分 -->
-      <div class="hidden md:block w-1/2 h-full bg-[#194bfb] relative">
+      <div class="hidden md:block w-1/2 h-full bg-[#3e67fc] relative">
         <img
           class="h-[60%] absolute top-[18%] left-[14%]"
           src="@/assets/login_right_banner2.jpg"
