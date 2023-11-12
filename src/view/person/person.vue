@@ -58,14 +58,14 @@
                 <el-tooltip
                   class="item"
                   effect="light"
-                  content="北京极光有限公司-研发部"
+                  content="北京贝吉塔有限公司-研发部"
                   placement="top"
                 >
                   <li class="info-list">
                     <el-icon>
                       <data-analysis />
                     </el-icon>
-                    北京极光有限公司-研发部
+                    北京贝吉塔有限公司-研发部
                   </li>
                 </el-tooltip>
                 <li class="info-list">
