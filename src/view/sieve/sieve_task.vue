@@ -305,24 +305,26 @@
           prop="file"
         >
           <el-upload
-            class="upload-demo"
-            :file-list="fileList"
+            ref="uploadRef"
+            class="upload-demo w-full"
             :on-change="handleUploadChange"
             :before-upload="() => false"
+            :auto-upload="false"
           >
-            <el-button slot="trigger">选择文件</el-button>
+            <template #trigger>
+              <el-button>选择文件</el-button>
+            </template>
+            <el-tooltip
+              effect="dark"
+              content="为了最佳优化，请将手机号以.txt格式上传，并确保每行只包含一个手机号"
+              placement="top"
+            >
+              <el-icon
+                style="margin-left: 4px"
+                :size="12"
+              ><Warning /></el-icon>
+            </el-tooltip>
           </el-upload>
-          <div v-if="form.file">{{ form.file.name }}</div>
-          <el-tooltip
-            effect="dark"
-            content="为了最佳优化，请将手机号以.txt格式上传，并确保每行只包含一个手机号"
-            placement="top"
-          >
-            <el-icon
-              style="margin-left: 4px"
-              :size="12"
-            ><Warning /></el-icon>
-          </el-tooltip>
         </el-form-item>
 
         <el-form-item>
@@ -339,37 +341,6 @@
           >重置</el-button>
         </el-form-item>
       </el-form>
-    </el-drawer>
-    <el-drawer
-      v-model="drawer2"
-      :direction="direction"
-    >
-      <template #header>
-        <h4>set title by slot</h4>
-      </template>
-      <template #default>
-        <div>
-          <el-radio
-            v-model="radio1"
-            label="Option 1"
-            size="large"
-          >Option 1</el-radio>
-          <el-radio
-            v-model="radio1"
-            label="Option 2"
-            size="large"
-          >Option 2</el-radio>
-        </div>
-      </template>
-      <template #footer>
-        <div style="flex: auto">
-          <el-button @click="cancelClick">cancel</el-button>
-          <el-button
-            type="primary"
-            @click="confirmClick"
-          >confirm</el-button>
-        </div>
-      </template>
     </el-drawer>
   </div>
 </template>
@@ -393,21 +364,8 @@ import { formatTimeToStr } from '@/utils/date'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-const drawer2 = ref(false)
-const direction = ref('rtl')
-
 const handleClose = () => {
   drawer.value = false
-}
-function cancelClick() {
-  drawer2.value = false
-}
-function confirmClick() {
-  ElMessageBox.confirm(`Are you confirm to chose ${radio1.value} ?`)
-    .then(() => {
-      drawer2.value = false
-    })
-    .catch(() => {})
 }
 
 const drawer = ref(false)
