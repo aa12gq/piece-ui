@@ -164,3 +164,11 @@ export const resetPassword = (data) => {
     data: data
   })
 }
+
+
+export const getAvailableConcurrency = () => {
+  return service({
+    url: '/user/getAvailableConcurrency',
+    method: 'get',
+  })
+}

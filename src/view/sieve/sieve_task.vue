@@ -49,7 +49,10 @@
           type="primary"
           icon="CirclePlus"
           class="ml-auto mr-4"
-          @click="drawer = true"
+          @click="()=>{
+            drawer = true
+            RefreshAvailableConcurrency()
+          }"
         >新建任务</el-button>
       </div>
 
@@ -282,6 +285,19 @@
             :max="1000"
             style="width: 100%"
           />
+          <span
+            class="text-sm text-orange-300 mt-2 "
+          >当前可用并发数{{
+            concurrencyInfo.concurrencyLimit -
+              concurrencyInfo.currentConcurrency
+          }}</span>
+          <el-icon
+            class="mt-2 cursor-pointer"
+            :class="{ 'rotate': isRefreshing }"
+            style="margin-left: 4px"
+            :size="12"
+            @click="RefreshAvailableConcurrency()"
+          ><Refresh /></el-icon>
         </el-form-item>
 
         <el-form-item
@@ -297,6 +313,16 @@
             <el-button slot="trigger">选择文件</el-button>
           </el-upload>
           <div v-if="form.file">{{ form.file.name }}</div>
+          <el-tooltip
+            effect="dark"
+            content="为了最佳优化，请将手机号以.txt格式上传，并确保每行只包含一个手机号"
+            placement="top"
+          >
+            <el-icon
+              style="margin-left: 4px"
+              :size="12"
+            ><Warning /></el-icon>
+          </el-tooltip>
         </el-form-item>
 
         <el-form-item>
@@ -358,6 +384,10 @@ import {
   downloadDisableAccounts,
   downloadNormalAccounts,
 } from '@/api/sieve'
+import {
+  getAvailableConcurrency,
+} from '@/api/user'
+
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
 import { ref, reactive, onMounted } from 'vue'
@@ -388,6 +418,7 @@ const pageSize = ref(10)
 const tableData = ref([])
 const searchText = ref('')
 const currentSearchText = ref('')
+const isRefreshing = ref(false)
 
 const handlePageChange = (val) => {
   page.value = val
@@ -600,8 +631,10 @@ const submitForm = async() => {
     const response = await createSieveTask(formData)
     if (response && response.code === 0) {
       ElMessage.success('提交成功！')
-      getTableData()
-
+      concurrencyInfo.value.currentConcurrency = concurrencyInfo.value.currentConcurrency - form.concurrency
+      setTimeout(() => {
+        getTableData()
+      }, 500)
       handleClose()
     }
   } catch (error) {
@@ -760,6 +793,21 @@ const downloadDisable = async(row) => {
 const downloadNormal = async(row) => {
   await downloadFile(downloadNormalAccounts, row, '正常账号.txt')
 }
+
+const concurrencyInfo = ref({
+  concurrencyLimit: 0,
+  currentConcurrency: 0
+})
+
+const RefreshAvailableConcurrency = async() => {
+  isRefreshing.value = true
+
+  const res = await getAvailableConcurrency()
+  concurrencyInfo.value = res.data
+  setTimeout(() => {
+    isRefreshing.value = false
+  }, 1000)
+}
 </script>
 
 <style lang="scss">
@@ -800,5 +848,18 @@ const downloadNormal = async(row) => {
   color: #66b1ff;
   background: none;
   border-color: transparent;
+}
+
+.rotate {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
