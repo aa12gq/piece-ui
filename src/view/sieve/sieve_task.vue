@@ -80,7 +80,20 @@
           label="文件名称"
           min-width="180"
           prop="file_name"
-        />
+        >
+          <template #default="scope">
+
+            <el-tooltip
+              class="item"
+              effect="dark"
+              :content="scope.row.file_name"
+              placement="top"
+            >
+              <div class="text-ellipsis">{{ scope.row.file_name.length > 10 ? scope.row.file_name.substr(0, 10) + '...' : scope.row.file_name }}</div>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+
         <el-table-column
           align="left"
           label="任务状态"
