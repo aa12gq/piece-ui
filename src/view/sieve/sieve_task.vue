@@ -62,6 +62,7 @@
         row-key="authorityId"
         style="width: 100%"
         :show-summary="true"
+        :summary-method="customSummary"
         @sort-change="handleSortChange"
       >
         <el-table-column
@@ -778,6 +779,32 @@ const RefreshAvailableConcurrency = async() => {
   setTimeout(() => {
     isRefreshing.value = false
   }, 1000)
+}
+
+const customSummary = (param) => {
+  const { columns, data } = param
+  const sums = []
+
+  columns.forEach((column, index) => {
+    if (index === 0) {
+      sums[index] = '合计'
+      return
+    }
+
+    // 只对特定的列进行合计
+    if (['nonDisabledAccounts', 'disabledAccounts', 'totalNumber'].includes(column.property)) {
+      const values = data.map(item => Number(item[column.property]))
+      sums[index] = values.reduce((prev, curr) => {
+        const value = Number(curr)
+        return !isNaN(value) ? prev + curr : prev
+      }, 0)
+    } else {
+      // 其他列可以设为空字符串或者其他标识
+      sums[index] = ''
+    }
+  })
+
+  return sums
 }
 </script>
 
