@@ -45,6 +45,18 @@
         />
         <el-table-column
           align="left"
+          label="并发数限制"
+          min-width="150"
+          prop="concurrencyLimit"
+        />
+        <el-table-column
+          align="left"
+          label="当前并发数"
+          min-width="150"
+          prop="currentConcurrency"
+        />
+        <el-table-column
+          align="left"
           label="手机号"
           min-width="180"
           prop="phone"

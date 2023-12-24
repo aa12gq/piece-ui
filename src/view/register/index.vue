@@ -21,6 +21,11 @@
           icon="CirclePlus"
           @click="drawer = true"
         >新建任务</el-button>
+        <el-button
+          type="primary"
+          icon="CirclePlus"
+          @click="drawer = true"
+        >导出账号</el-button>
         <el-tooltip
           class="box-item"
           effect="dark"
@@ -44,7 +49,7 @@
         <el-button
           type="primary"
           icon="refresh"
-          @click="getTableData"
+          @click="getTableData()"
         >刷新</el-button>
       </div>
       <el-table
@@ -91,45 +96,73 @@
 
         <el-table-column
           align="left"
-          label="总数"
+          label="并发数"
           min-width="180"
-          prop="authorityName"
+          prop="concurrency"
         >
           <template #default="{ row }">
-            {{ row.phone_number_total }}
+            {{ row.concurrency }}
           </template>
         </el-table-column>
-        <!-- <el-table-column
+        <el-table-column
           align="left"
-          label="代理"
+          label="成功"
           min-width="180"
-          prop="authorityName"
-        /> -->
+          prop="success_count"
+        />
+        <el-table-column
+          align="left"
+          label="封号"
+          min-width="180"
+          prop="blocked_count"
+        />
+        <el-table-column
+          align="left"
+          label="风控1小时"
+          min-width="180"
+          prop="risk_control_count"
+        />
+        <el-table-column
+          align="left"
+          label="总数"
+          min-width="180"
+          prop="totalNumber"
+        />
         <el-table-column
           align="left"
           label="创建时间"
           min-width="180"
-          prop="start_time"
+          prop="createdAt"
         />
         <el-table-column
           align="left"
           label="更新时间"
           min-width="180"
-          prop="end_time"
+          prop="updatedAt"
         />
         <el-table-column
           align="left"
           label="操作"
-          width="150"
+          width="360"
           fixed="right"
         >
           <template #default="scope">
             <el-button
-              icon="edit"
+              icon="Files"
               type="primary"
               link
-              @click="editAuthority(scope.row)"
-            >编辑</el-button>
+              @click="
+                $router.push({
+                  name: 'subtask',
+                  params: { id: scope.row.ID },
+                })
+              "
+            >详情</el-button>
+            <el-button
+              icon="Edit"
+              link
+              type="primary"
+            >更新并发数</el-button>
             <!-- <el-button
               v-if="scope.row.status === 'Pause'"
               type="info"
@@ -150,6 +183,44 @@
               link
               @click="deleteAuth(scope.row)"
             >删除</el-button>
+            <!-- 更多操作 Dropdown -->
+            <el-dropdown
+              trigger="click"
+              class="el-button-like"
+            >
+              <el-button
+                class="button-with-icon-right ml-3"
+                type="primary"
+                link
+                icon="More"
+              >更多操作</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-if="scope.row.status === 'Pause'"
+                    @click.native="openRecover(scope.row)"
+                  >恢复</el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="scope.row.status === 'Running'"
+                    @click.native="openPause(scope.row)"
+                  >暂停</el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="
+                      scope.row.nonDisabledAccounts > 0 &&
+                        scope.row.DisabledAccounts > 0
+                    "
+                  >什么都没有</el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="scope.row.nonDisabledAccounts > 1"
+                    @click="downloadNormal(scope.row)"
+                  >下载存活账号</el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="scope.row.disabledAccounts > 1"
+                    @click="downloadDisable(scope.row)"
+                  >下载禁用账号</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -189,10 +260,10 @@
 
         <el-form-item
           label="国家区号"
-          prop="countryCode"
+          prop="country"
         >
           <el-select
-            v-model="form.countryCode"
+            v-model="form.country"
             filterable
             placeholder="请选择国家区号"
             style="width: 100%;"
@@ -211,14 +282,110 @@
           prop="concurrency"
         >
           <el-input
-            v-model="form.concurrency"
+            v-model.number="form.concurrency"
             type="number"
             placeholder="并发数"
             :min="1"
             :max="1000"
-            style="width: 100%;"
+            style="width: 100%"
           />
+          <span
+            class="text-sm text-orange-300 mt-2 "
+          >当前可用并发数{{
+            concurrencyInfo.concurrencyLimit -
+              concurrencyInfo.currentConcurrency
+          }}</span>
+          <el-icon
+            class="mt-2 cursor-pointer"
+            :class="{ 'rotate': isRefreshing }"
+            style="margin-left: 4px"
+            :size="12"
+            @click="RefreshAvailableConcurrency()"
+          ><Refresh /></el-icon>
         </el-form-item>
+
+        <!-- 标签和账号类型分为一行两列 -->
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <!-- 标签选项 -->
+            <el-form-item label="标签">
+              <el-select
+                v-model="form.tag"
+                placeholder="请选择标签"
+              >
+                <el-option
+                  label="首次卡"
+                  value="firstCard"
+                />
+                <el-option
+                  label="劫持号"
+                  value="hijackNumber"
+                />
+                <el-option
+                  label="二次卡"
+                  value="secondCard"
+                />
+                <el-option
+                  label="测试卡"
+                  value="testCard"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <!-- 账号类型选项 -->
+            <el-form-item label="账号类型">
+              <el-select
+                v-model="form.accountType"
+                placeholder="请选择账号类型"
+              >
+                <el-option
+                  label="Android 商业"
+                  value="androidBusiness"
+                />
+                <el-option
+                  label="Android 个人"
+                  value="androidPersonal"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <!-- 标签和账号类型分为一行两列 -->
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <!-- 标签选项 -->
+            <el-form-item label="ip代理">
+              <el-select
+                v-model="form.tag"
+                placeholder="请选择IP代理"
+              >
+                <el-option
+                  label="自定义代理(数量：20611)"
+                  value="firstCard"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <!-- 账号类型选项 -->
+            <el-form-item label="代理策略">
+              <el-select
+                v-model="form.accountType"
+                placeholder="请选择账号类型"
+              >
+                <el-option
+                  label="Android 商业"
+                  value="androidBusiness"
+                />
+                <el-option
+                  label="Android 个人"
+                  value="androidPersonal"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="任务操作">
           <el-radio-group v-model="form.immediate">
             <el-radio :label="true">立即开始</el-radio>
@@ -310,6 +477,9 @@ import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  getAvailableConcurrency,
+} from '@/api/user'
 
 const drawer2 = ref(false)
 const direction = ref('rtl')
@@ -330,7 +500,7 @@ function confirmClick() {
 }
 
 defineOptions({
-  name: 'Authority',
+  name: 'Register',
 })
 
 const AuthorityOption = ref([
@@ -351,8 +521,9 @@ const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref([])
-// const searchInfo = ref({})
-
+const searchText = ref('')
+const currentSearchText = ref('')
+const isRefreshing = ref(false)
 const handlePageChange = (val) => {
   page.value = val
   getTableData()
@@ -363,17 +534,49 @@ const handleSizeChange = (val) => {
   getTableData()
 }
 
-// 查询
-const getTableData = async() => {
-  const table = await getRegisterTaskList(page.value, pageSize.value)
+const concurrencyInfo = ref({
+  concurrencyLimit: 0,
+  currentConcurrency: 0
+})
+
+const RefreshAvailableConcurrency = async() => {
+  isRefreshing.value = true
+
+  const res = await getAvailableConcurrency()
+  concurrencyInfo.value = res.data
+  setTimeout(() => {
+    isRefreshing.value = false
+  }, 1000)
+}
+
+const getTableData = async(sortProp, sortOrder) => {
+  const table = await getRegisterTaskList({
+    page: page.value,
+    pageSize: pageSize.value,
+    taskName: currentSearchText.value,
+    sort: sortProp,
+    order: sortOrder,
+  })
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
       table.data.list.forEach((item) => {
-        item.start_time = item.start_time ? formatTimeToStr(item.start_time, 'yyyy-MM-dd hh:mm:ss') : ''
-        item.end_time = item.end_time ? formatTimeToStr(item.end_time, 'yyyy-MM-dd hh:mm:ss') : ''
+        item.createdAt = item.createdAt
+          ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
+        item.updatedAt = item.updatedAt
+          ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
       })
+
       tableData.value = table.data.list
+      console.log(tableData.value)
+
+      if (shouldAutoRefresh(table.data.list)) {
+        startAutoRefresh()
+      } else {
+        stopAutoRefresh()
+      }
     }, 100)
     total.value = table.data.total
     page.value = table.data.page
@@ -500,7 +703,7 @@ const setOptions = () => {
     },
   ]
   setAuthorityOptions(tableData.value, AuthorityOption.value, false)
-}
+} 
 const setAuthorityOptions = (AuthorityData, optionsData, disabled) => {
   form.value.authorityId = String(form.value.authorityId)
   AuthorityData &&
@@ -683,6 +886,7 @@ const form = reactive({
   country: '',
   concurrency: 1,
   file: null,
+  tag: 1,
   immediate: true, // 默认为立即开始
 })
 
@@ -702,13 +906,21 @@ const submitForm = async() => {
   const valid = await formRef.value.validate()
   if (!valid) return
 
+  // 创建一个 FormData 对象
   const formData = new FormData()
   formData.append('taskName', form.taskName)
+  formData.append('country', form.country)
+  formData.append('concurrency', form.concurrency)
+  formData.append('tag', form.tag)
+  formData.append('immediate', form.immediate)
+  // 检查是否有文件要上传
   if (form.file) {
     formData.append('file', form.file, form.file.name)
   }
 
   try {
+    console.log(form)
+    // 调用 API 并传入 FormData
     await createRegisterTask(formData)
     ElMessage.success('创建成功！')
     handleClose()
@@ -738,4 +950,43 @@ const resetForm = () => {
   height: calc(100vh - 158px);
   overflow: auto;
 }
+
+.button-group {
+  display: flex;
+  align-items: center;
+}
+
+.el-button-like {
+  line-height: normal;
+  color: #409eff;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.el-button-like .el-button {
+  padding: 0;
+  margin-right: 10px;
+}
+
+.el-button-like .el-button:focus,
+.el-button-like .el-button:hover {
+  color: #66b1ff;
+  background: none;
+  border-color: transparent;
+}
+
+.rotate {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 </style>
+
