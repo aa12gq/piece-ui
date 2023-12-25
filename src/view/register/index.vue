@@ -21,11 +21,11 @@
           icon="CirclePlus"
           @click="drawer = true"
         >新建任务</el-button>
-        <el-button
+        <!-- <el-button
           type="primary"
           icon="CirclePlus"
           @click="drawer = true"
-        >导出账号</el-button>
+        >导出账号</el-button> -->
         <el-tooltip
           class="box-item"
           effect="dark"
@@ -54,9 +54,9 @@
       </div>
       <el-table
         :data="tableData"
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        :tree-props="{children:'children',hasChildren:'hasChildren'}"
         row-key="authorityId"
-        style="width: 100%"
+        style="width:100%"
       >
         <el-table-column
           label="ID"
@@ -80,30 +80,23 @@
           label="任务状态"
           min-width="180"
         >
-          <template #default="{ row }">
+          <template #default="{row}">
             <el-button
               :type="getButtonType(row.status)"
               size="small"
               :loading-icon="Eleme"
-              :loading="row.status == 'Running'"
+              :loading="row.status=='Running'"
               :icon="getButtonIcon(row.status)"
               plain
-            >
-              {{ getStatusButtonType(row.status) }}
-            </el-button>
+            >{{ getStatusButtonType(row.status) }}</el-button>
           </template>
         </el-table-column>
-
         <el-table-column
           align="left"
           label="并发数"
           min-width="180"
           prop="concurrency"
-        >
-          <template #default="{ row }">
-            {{ row.concurrency }}
-          </template>
-        </el-table-column>
+        />
         <el-table-column
           align="left"
           label="成功"
@@ -151,39 +144,19 @@
               icon="Files"
               type="primary"
               link
-              @click="
-                $router.push({
-                  name: 'subtask',
-                  params: { id: scope.row.ID },
-                })
-              "
+              @click="$router.push({name:'subtask',params:{id:scope.row.ID}})"
             >详情</el-button>
             <el-button
               icon="Edit"
               link
               type="primary"
             >更新并发数</el-button>
-            <!-- <el-button
-              v-if="scope.row.status === 'Pause'"
-              type="info"
-              icon="VideoPause"
-              link
-            >恢复</el-button>
-
-            <el-button
-              v-if="scope.row.status === 'Running'"
-              type="danger"
-              icon="VideoPlay"
-              link
-            >暂停</el-button> -->
-
             <el-button
               icon="delete"
               type="primary"
               link
               @click="deleteAuth(scope.row)"
             >删除</el-button>
-            <!-- 更多操作 Dropdown -->
             <el-dropdown
               trigger="click"
               class="el-button-like"
@@ -197,27 +170,28 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item
-                    v-if="scope.row.status === 'Pause'"
+                    v-if="scope.row.status==='Pause'"
                     @click.native="openRecover(scope.row)"
                   >恢复</el-dropdown-item>
+                  <el-dropdown-item v-if="scope.row.nonDisabledAccounts>0&&scope.row.DisabledAccounts>0">什么都没有</el-dropdown-item>
                   <el-dropdown-item
-                    v-if="scope.row.status === 'Running'"
-                    @click.native="openPause(scope.row)"
-                  >暂停</el-dropdown-item>
+                    @click="downloadBlockedAccountsAsTxt(scope.row)"
+                  >下载封号账号(txt)</el-dropdown-item>
                   <el-dropdown-item
-                    v-if="
-                      scope.row.nonDisabledAccounts > 0 &&
-                        scope.row.DisabledAccounts > 0
-                    "
-                  >什么都没有</el-dropdown-item>
+                    @click="downloadBlockedAccountsAsExcel(scope.row)"
+                  >下载封号账号(xlsx)</el-dropdown-item>
                   <el-dropdown-item
-                    v-if="scope.row.nonDisabledAccounts > 1"
-                    @click="downloadNormal(scope.row)"
-                  >下载存活账号</el-dropdown-item>
+                    @click="downloadRiskControlAccountsAsTxt(scope.row)"
+                  >下载风控账号(txt)</el-dropdown-item>
                   <el-dropdown-item
-                    v-if="scope.row.disabledAccounts > 1"
-                    @click="downloadDisable(scope.row)"
-                  >下载禁用账号</el-dropdown-item>
+                    @click="downloadRiskControlAccountsAsExcel(scope.row)"
+                  >下载风控账号(xlsx)</el-dropdown-item>
+                  <el-dropdown-item
+                    @click="downloadSuccessAccountsAsTxt(scope.row)"
+                  >下载成功账号(txt)</el-dropdown-item>
+                  <el-dropdown-item
+                    @click="downloadSuccessAccountsAsExcel(scope.row)"
+                  >下载成功账号(xlsx)</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -464,14 +438,14 @@
 
 <script setup>
 import {
-  deleteAuthority,
-  createAuthority,
-  updateAuthority,
-  copyAuthority,
-} from '@/api/authority'
-import {
   getRegisterTaskList,
   createRegisterTask,
+  DownloadBlockedAccountsAsTxt,
+  DownloadBlockedAccountsAsExcel,
+  DownloadRiskControlAccountsAsTxt,
+  DownloadRiskControlAccountsAsExcel,
+  DownloadSuccessAccountsAsTxt,
+  DownloadSuccessAccountsAsExcel
 } from '@/api/registerTask'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
@@ -703,7 +677,7 @@ const setOptions = () => {
     },
   ]
   setAuthorityOptions(tableData.value, AuthorityOption.value, false)
-} 
+}
 const setAuthorityOptions = (AuthorityData, optionsData, disabled) => {
   form.value.authorityId = String(form.value.authorityId)
   AuthorityData &&
@@ -932,6 +906,67 @@ const submitForm = async() => {
 const resetForm = () => {
   if (formRef.value) {
     formRef.value.resetFields()
+  }
+}
+
+// 以TXT格式下载被封锁的帐号
+const downloadBlockedAccountsAsTxt = async(row) => {
+  await downloadFile(DownloadBlockedAccountsAsTxt, row, '封锁账号.txt')
+}
+
+// 以excel格式下载被封锁的帐户
+const downloadBlockedAccountsAsExcel = async(row) => {
+  await downloadFile(DownloadBlockedAccountsAsExcel, row, '封锁账号.xlsx')
+}
+
+// 以TXT格式下载风控账户
+const downloadRiskControlAccountsAsTxt = async(row) => {
+  await downloadFile(DownloadRiskControlAccountsAsTxt, row, '风控账号.txt')
+}
+
+// 以excel格式下载风控账目
+const downloadRiskControlAccountsAsExcel = async(row) => {
+  await downloadFile(DownloadRiskControlAccountsAsExcel, row, '风控账号.xlsx')
+}
+
+// 以excel格式下载成功账目
+const downloadSuccessAccountsAsTxt = async(row) => {
+  await downloadFile(DownloadSuccessAccountsAsTxt, row, '成功账号.txt')
+}
+
+// 以excel格式下载成功账目
+const downloadSuccessAccountsAsExcel = async(row) => {
+  await downloadFile(DownloadSuccessAccountsAsExcel, row, '成功账号.xlsx')
+}
+
+// 通用的下载文件函数
+const downloadFile = async(downloadFunc, row, fileName, delay = 3000) => {
+  try {
+    ElMessage.info('准备下载，请稍候...')
+    const response = await downloadFunc(row.ID)
+
+    if (response && response.data) {
+      console.log(`开始下载 ${fileName}`, response)
+      const blob = new Blob([response.data], { type: 'text/plain' })
+
+      setTimeout(() => {
+        // 延迟下载
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', fileName)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        ElMessage.success('下载成功')
+      }, delay)
+    } else {
+      ElMessage.error(`下载 ${fileName} 失败：没有数据返回`)
+    }
+  } catch (error) {
+    ElMessage.error('下载出错')
+    console.error('下载出错', error)
   }
 }
 </script>

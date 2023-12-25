@@ -29,3 +29,51 @@ export const getSubTaskList = (page, pageSize, taskId, phone) => {
     method: 'get',
   })
 }
+
+export const DownloadBlockedAccountsAsTxt = (taskId) => {
+  return service({
+    url: `/registerNumber/download/blocked/txt/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
+  })
+}
+
+export const DownloadBlockedAccountsAsExcel = (taskId) => {
+  return service({
+    url: `/registerNumber/download/blocked/excel/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
+  })
+}
+
+export const DownloadRiskControlAccountsAsTxt = (taskId) => {
+  return service({
+    url: `/registerNumber/download/riskcontrol/txt/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
+  })
+}
+
+export const DownloadRiskControlAccountsAsExcel = (taskId) => {
+  return service({
+    url: `/registerNumber/download/riskcontrol/excel/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
+  })
+}
+
+export const DownloadSuccessAccountsAsTxt = (taskId) => {
+  return service({
+    url: `/registerNumber/download/success/txt/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
+  })
+}
+
+export const DownloadSuccessAccountsAsExcel = (taskId) => {
+  return service({
+    url: `/registerNumber/download/success/excel/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
+  })
+}
