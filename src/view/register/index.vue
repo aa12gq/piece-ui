@@ -155,7 +155,8 @@
               icon="delete"
               type="primary"
               link
-              @click="deleteAuth(scope.row)"
+              :disabled="scope.row.status == 'Running'"
+              @click="deleteTask(scope.row)"
             >删除</el-button>
             <el-dropdown
               trigger="click"
@@ -169,10 +170,6 @@
               >更多操作</el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item
-                    v-if="scope.row.status==='Pause'"
-                    @click.native="openRecover(scope.row)"
-                  >恢复</el-dropdown-item>
                   <el-dropdown-item v-if="scope.row.nonDisabledAccounts>0&&scope.row.DisabledAccounts>0">什么都没有</el-dropdown-item>
                   <el-dropdown-item
                     @click="downloadBlockedAccountsAsTxt(scope.row)"
@@ -306,60 +303,10 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <!-- 账号类型选项 -->
-            <el-form-item label="账号类型">
-              <el-select
-                v-model="form.accountType"
-                placeholder="请选择账号类型"
-              >
-                <el-option
-                  label="Android 商业"
-                  value="androidBusiness"
-                />
-                <el-option
-                  label="Android 个人"
-                  value="androidPersonal"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
+
         </el-row>
         <!-- 标签和账号类型分为一行两列 -->
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <!-- 标签选项 -->
-            <el-form-item label="ip代理">
-              <el-select
-                v-model="form.tag"
-                placeholder="请选择IP代理"
-              >
-                <el-option
-                  label="自定义代理(数量：20611)"
-                  value="firstCard"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <!-- 账号类型选项 -->
-            <el-form-item label="代理策略">
-              <el-select
-                v-model="form.accountType"
-                placeholder="请选择账号类型"
-              >
-                <el-option
-                  label="Android 商业"
-                  value="androidBusiness"
-                />
-                <el-option
-                  label="Android 个人"
-                  value="androidPersonal"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-row :gutter="20" />
         <el-form-item label="任务操作">
           <el-radio-group v-model="form.immediate">
             <el-radio :label="true">立即开始</el-radio>
@@ -445,7 +392,8 @@ import {
   DownloadRiskControlAccountsAsTxt,
   DownloadRiskControlAccountsAsExcel,
   DownloadSuccessAccountsAsTxt,
-  DownloadSuccessAccountsAsExcel
+  DownloadSuccessAccountsAsExcel,
+  deleteRegisterTask
 } from '@/api/registerTask'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
@@ -561,23 +509,27 @@ const getTableData = async(sortProp, sortOrder) => {
 getTableData()
 
 // 删除任务
-const deleteAuth = (row) => {
-  ElMessageBox.confirm('此操作将永久删除该任务, 是否继续?', '提示', {
+const deleteTask = (row) => {
+  ElMessageBox.confirm('此操作将永久删除该任务及相关账号, 是否继续?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
   })
     .then(async() => {
-      const res = await deleteAuthority({ authorityId: row.authorityId })
+      const res = await deleteRegisterTask({ ID: row.ID })
       if (res.code === 0) {
         ElMessage({
           type: 'success',
-          message: '删除成功!',
+          message: '任务删除成功 !',
         })
         if (tableData.value.length === 1 && page.value > 1) {
           page.value--
         }
         getTableData()
+        // 当删除后没有运行中的任务时，停止自动刷新
+        if (!tableData.value.some((item) => item.status === 'Running')) {
+          stopAutoRefresh()
+        }
       }
     })
     .catch(() => {

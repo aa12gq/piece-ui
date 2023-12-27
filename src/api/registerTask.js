@@ -77,3 +77,11 @@ export const DownloadSuccessAccountsAsExcel = (taskId) => {
     responseType: 'blob',
   })
 }
+
+export const deleteRegisterTask = (data) => {
+  return service({
+    url: `/registerTask/deleteRegisterTask`,
+    method: 'delete',
+    data
+  })
+}
