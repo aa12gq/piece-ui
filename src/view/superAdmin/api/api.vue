@@ -282,8 +282,6 @@ import { toSQLLine } from '@/utils/stringFun'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { VideoCameraFilled } from '@element-plus/icons-vue'
-import { toDoc } from '@/utils/doc'
 
 defineOptions({
   name: 'Api',

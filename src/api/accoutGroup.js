@@ -10,11 +10,10 @@ export const createAccountGroupInfo = (data) => {
 }
 
 // 删除账号分组
-export const deleteAccountGroupInfo = (params) => {
+export const deleteAccountGroupInfo = (id) => {
   return service({
-    url: `/accountGroupInfo/deleteAccountGroupInfo`,
+    url: `/accountGroupInfo/deleteAccountGroupInfo/${String(id)}`,
     method: 'delete',
-    params
   })
 }
 
@@ -37,9 +36,9 @@ export const updateAccountGroupInfo = (data) => {
 }
 
 // 根据ID获取账号分组
-export const findAccountGroupInfo = () => {
+export const findAccountGroupInfo = (id) => {
   return service({
-    url: `/accountGroupInfo/findAccountGroupInfo`,
+    url: `/accountGroupInfo/findAccountGroupInfo/${String(id)}`,
     method: 'get',
   })
 }

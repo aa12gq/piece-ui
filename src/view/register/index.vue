@@ -8,19 +8,29 @@
           placeholder="请输入任务名称"
           clearable
           style="width: 200px;"
-          @clear="clearSearch"
-          @keyup.enter.native="searchTask"
         />
         <el-button
           type="primary"
           icon="Search"
-          @click="searchTask"
         >搜索</el-button>
         <el-button
           type="primary"
           icon="CirclePlus"
           @click="drawer = true"
         >新建任务</el-button>
+        <el-button
+          icon="delete"
+          type="primary"
+          :disabled="multipleSelection.length != 1 ? true : false"
+          @click="pauseTask()"
+        >暂停任务</el-button>
+        <el-button
+          icon="delete"
+          type="primary"
+          :disabled="multipleSelection.length != 1 ? true : false"
+
+          @click="resumeTask()"
+        >恢复任务</el-button>
         <!-- <el-button
           type="primary"
           icon="CirclePlus"
@@ -45,19 +55,19 @@
           content="暂未开发，敬请期待"
           placement="top-start"
         />
-
-        <el-button
-          type="primary"
-          icon="refresh"
-          @click="getTableData()"
-        >刷新</el-button>
       </div>
       <el-table
+        ref="multipleTableRef"
         :data="tableData"
         :tree-props="{children:'children',hasChildren:'hasChildren'}"
         row-key="authorityId"
         style="width:100%"
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column
+          type="selection"
+          width="55"
+        />
         <el-table-column
           label="ID"
           min-width="180"
@@ -84,7 +94,6 @@
             <el-button
               :type="getButtonType(row.status)"
               size="small"
-              :loading-icon="Eleme"
               :loading="row.status=='Running'"
               :icon="getButtonIcon(row.status)"
               plain
@@ -158,6 +167,7 @@
               :disabled="scope.row.status == 'Running'"
               @click="deleteTask(scope.row)"
             >删除</el-button>
+
             <el-dropdown
               trigger="click"
               class="el-button-like"
@@ -281,24 +291,34 @@
             <!-- 标签选项 -->
             <el-form-item label="标签">
               <el-select
-                v-model="form.tag"
+                v-model="form.tag_id"
                 placeholder="请选择标签"
               >
                 <el-option
-                  label="首次卡"
-                  value="firstCard"
+                  v-for="item in accoutTagInfo"
+                  :key="item.ID"
+                  :label="item.name"
+                  :value="item.ID"
                 />
+              </el-select>
+            </el-form-item>
+          </el-col>
+
+        </el-row>
+        <!-- 标签和账号类型分为一行两列 -->
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <!-- 标签选项 -->
+            <el-form-item label="分组">
+              <el-select
+                v-model="form.group_id"
+                placeholder="请选择分组"
+              >
                 <el-option
-                  label="劫持号"
-                  value="hijackNumber"
-                />
-                <el-option
-                  label="二次卡"
-                  value="secondCard"
-                />
-                <el-option
-                  label="测试卡"
-                  value="testCard"
+                  v-for="item in accoutGroupInfo"
+                  :key="item.ID"
+                  :label="item.name"
+                  :value="item.ID"
                 />
               </el-select>
             </el-form-item>
@@ -393,7 +413,9 @@ import {
   DownloadRiskControlAccountsAsExcel,
   DownloadSuccessAccountsAsTxt,
   DownloadSuccessAccountsAsExcel,
-  deleteRegisterTask
+  deleteRegisterTask,
+  PauseTask,
+  ResumeTask
 } from '@/api/registerTask'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
@@ -402,6 +424,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getAvailableConcurrency,
 } from '@/api/user'
+import { getAccountTagInfoList } from '@/api/accoutTag'
+import { getAccountGroupInfoList } from '@/api/accoutGroup'
 
 const drawer2 = ref(false)
 const direction = ref('rtl')
@@ -425,19 +449,7 @@ defineOptions({
   name: 'Register',
 })
 
-const AuthorityOption = ref([
-  {
-    authorityId: 0,
-    authorityName: '根角色',
-  },
-])
 const drawer = ref(false)
-const dialogType = ref('add')
-
-const dialogTitle = ref('新建任务')
-const dialogFormVisible = ref(false)
-const apiDialogFlag = ref(false)
-const copyForm = ref({})
 
 const page = ref(1)
 const total = ref(0)
@@ -490,7 +502,8 @@ const getTableData = async(sortProp, sortOrder) => {
           ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
           : ''
       })
-
+      refreshAccoutTagInfo()
+      refreshAccoutGroupInfo()
       tableData.value = table.data.list
       console.log(tableData.value)
 
@@ -517,7 +530,7 @@ const deleteTask = (row) => {
   })
     .then(async() => {
       const res = await deleteRegisterTask({ ID: row.ID })
-      if (res.code === 0) {
+      if (res.code === 0 || res == null) {
         ElMessage({
           type: 'success',
           message: '任务删除成功 !',
@@ -539,134 +552,75 @@ const deleteTask = (row) => {
       })
     })
 }
-// 初始化表单
-const authorityForm = ref(null)
-const initForm = () => {
-  if (authorityForm.value) {
-    authorityForm.value.resetFields()
-  }
-  form.value = {
-    authorityId: 0,
-    authorityName: '',
-    parentId: 0,
-  }
-}
-// 关闭窗口
-const closeDialog = () => {
-  initForm()
-  dialogFormVisible.value = false
-  apiDialogFlag.value = false
-}
-// 确定弹窗
 
-const enterDialog = () => {
-  authorityForm.value.validate(async(valid) => {
-    if (valid) {
-      form.value.authorityId = Number(form.value.authorityId)
-      switch (dialogType.value) {
-        case 'add':
-          {
-            const res = await createAuthority(form.value)
-            if (res.code === 0) {
-              ElMessage({
-                type: 'success',
-                message: '添加成功!',
-              })
-              getTableData()
-              closeDialog()
-            }
-          }
-          break
-        case 'edit':
-          {
-            const res = await updateAuthority(form.value)
-            if (res.code === 0) {
-              ElMessage({
-                type: 'success',
-                message: '添加成功!',
-              })
-              getTableData()
-              closeDialog()
-            }
-          }
-          break
-        case 'copy': {
-          const data = {
-            authority: {
-              authorityId: 0,
-              authorityName: '',
-              datauthorityId: [],
-              parentId: 0,
-            },
-            oldAuthorityId: 0,
-          }
-          data.authority.authorityId = form.value.authorityId
-          data.authority.authorityName = form.value.authorityName
-          data.authority.parentId = form.value.parentId
-          data.authority.dataAuthorityId = copyForm.value.dataAuthorityId
-          data.oldAuthorityId = copyForm.value.authorityId
-          const res = await copyAuthority(data)
-          if (res.code === 0) {
-            ElMessage({
-              type: 'success',
-              message: '复制成功！',
-            })
-            getTableData()
-          }
-        }
-      }
-
-      initForm()
-      dialogFormVisible.value = false
-    }
+// 暂停任务
+const pauseTask = (row) => {
+  if (multipleSelection.value.length !== 1) {
+    ElMessage({
+      type: 'info',
+      message: '目前暂停任务只支持单个任务进行暂停',
+    })
+  }
+  ElMessageBox.confirm('此操作将暂停该任务, 是否继续?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
   })
-}
-const setOptions = () => {
-  AuthorityOption.value = [
-    {
-      authorityId: 0,
-      authorityName: '根角色',
-    },
-  ]
-  setAuthorityOptions(tableData.value, AuthorityOption.value, false)
-}
-const setAuthorityOptions = (AuthorityData, optionsData, disabled) => {
-  form.value.authorityId = String(form.value.authorityId)
-  AuthorityData &&
-    AuthorityData.forEach((item) => {
-      if (item.children && item.children.length) {
-        const option = {
-          authorityId: item.authorityId,
-          authorityName: item.authorityName,
-          disabled: disabled || item.authorityId === form.value.authorityId,
-          children: [],
+    .then(async() => {
+      const res = await PauseTask(multipleSelection.value[0].ID)
+      if (res.code === 0 || res == null) {
+        ElMessage({
+          type: 'success',
+          message: '任务暂停成功 !',
+        })
+        getTableData()
+        // 当删除后没有运行中的任务时，停止自动刷新
+        if (!tableData.value.some((item) => item.status === 'Running')) {
+          stopAutoRefresh()
         }
-        setAuthorityOptions(
-          item.children,
-          option.children,
-          disabled || item.authorityId === form.value.authorityId
-        )
-        optionsData.push(option)
-      } else {
-        const option = {
-          authorityId: item.authorityId,
-          authorityName: item.authorityName,
-          disabled: disabled || item.authorityId === form.value.authorityId,
-        }
-        optionsData.push(option)
       }
     })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '已取消暂停',
+      })
+    })
 }
-// 编辑角色
-const editAuthority = (row) => {
-  setOptions()
-  dialogTitle.value = '编辑角色'
-  dialogType.value = 'edit'
-  for (const key in form.value) {
-    form.value[key] = row[key]
+
+// 恢复任务
+const resumeTask = (row) => {
+  if (multipleSelection.value.length !== 1) {
+    ElMessage({
+      type: 'info',
+      message: '目前恢复任务只支持单个任务进行恢复',
+    })
   }
-  setOptions()
-  dialogFormVisible.value = true
+  ElMessageBox.confirm('您确定要恢复该任务吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(async() => {
+      const res = await ResumeTask(multipleSelection.value[0].ID)
+      if (res.code === 0) {
+        ElMessage({
+          type: 'success',
+          message: '任务恢复成功 !',
+        })
+        getTableData()
+        // 当删除后没有运行中的任务时，停止自动刷新
+        if (!tableData.value.some((item) => item.status === 'Running')) {
+          stopAutoRefresh()
+        }
+      }
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '已取消恢复任务',
+      })
+    })
 }
 
 const getStatusButtonType = (status) => {
@@ -812,8 +766,9 @@ const form = reactive({
   country: '',
   concurrency: 1,
   file: null,
-  tag: 1,
+  tag_id: 0,
   immediate: true, // 默认为立即开始
+  group_id: 0,
 })
 
 const rules = {
@@ -837,7 +792,8 @@ const submitForm = async() => {
   formData.append('taskName', form.taskName)
   formData.append('country', form.country)
   formData.append('concurrency', form.concurrency)
-  formData.append('tag', form.tag)
+  formData.append('tag_id', form.tag_id)
+  formData.append('group_id', form.group_id)
   formData.append('immediate', form.immediate)
   // 检查是否有文件要上传
   if (form.file) {
@@ -920,6 +876,76 @@ const downloadFile = async(downloadFunc, row, fileName, delay = 3000) => {
     ElMessage.error('下载出错')
     console.error('下载出错', error)
   }
+}
+
+const accoutGroupInfo = ref([])
+// 查询
+const refreshAccoutGroupInfo = async() => {
+  const result = await getAccountGroupInfoList(
+    1,
+    100
+  )
+  if (result.code === 0) {
+    accoutGroupInfo.value = []
+    setTimeout(() => {
+      result.data.list.forEach((item) => {
+        item.createdAt = item.createdAt
+          ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
+        item.updatedAt = item.updatedAt
+          ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
+      })
+
+      accoutGroupInfo.value = result.data.list
+    }, 100)
+    total.value = result.data.total
+    page.value = result.data.page
+    pageSize.value = result.data.pageSize
+  }
+}
+
+const accoutTagInfo = ref([])
+
+const refreshAccoutTagInfo = async() => {
+  const info = await getAccountTagInfoList(
+    1,
+    100
+  )
+  if (info.code === 0) {
+    accoutTagInfo.value = []
+    setTimeout(() => {
+      info.data.list.forEach((item) => {
+        item.CreatedAt = item.CreatedAt
+          ? formatTimeToStr(item.CreatedAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
+        item.UpdatedAt = item.UpdatedAt
+          ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss')
+          : ''
+      })
+
+      accoutTagInfo.value = info.data.list
+      console.log('ceshi1', accoutTagInfo.value)
+    }, 100)
+    total.value = info.data.total
+    page.value = info.data.page
+    pageSize.value = info.data.pageSize
+  }
+}
+
+const multipleTableRef = ref(null)
+const multipleSelection = ref([])
+const toggleSelection = (rows) => {
+  if (rows) {
+    rows.forEach((row) => {
+      multipleTableRef.value.toggleRowSelection(row, undefined)
+    })
+  } else {
+    multipleTableRef.value.clearSelection()
+  }
+}
+const handleSelectionChange = (val) => {
+  multipleSelection.value = val
 }
 </script>
 

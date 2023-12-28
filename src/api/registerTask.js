@@ -23,6 +23,17 @@ export const createRegisterTask = (data) => {
   })
 }
 
+export const updateAccountGroupInfo = (data) => {
+  return service({
+    url: `/registerTask/updateAccountGroupInfo`,
+    method: 'put',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
 export const getSubTaskList = (page, pageSize, taskId, phone) => {
   return service({
     url: `/registerSubTask/getRegisterSubTaskList?page=${page}&pageSize=${pageSize}&main_task_id=${taskId}&phone_number=${phone}`,
@@ -85,3 +96,18 @@ export const deleteRegisterTask = (data) => {
     data
   })
 }
+
+export const PauseTask = (id) => {
+  return service({
+    url: `/registerTask/pauseTask/${id}`,
+    method: 'post',
+  })
+}
+
+export const ResumeTask = (id) => {
+  return service({
+    url: `/registerTask/resumeTask/${id}`,
+    method: 'post',
+  })
+}
+

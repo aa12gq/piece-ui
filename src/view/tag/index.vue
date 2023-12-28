@@ -8,7 +8,7 @@
         <div class="search-section flex space-x-4">
           <el-input
             v-model="searchText"
-            placeholder="请输入分组名称"
+            placeholder="请输入标签名称"
             clearable
             style="width: 200px"
             @clear="clearSearch"
@@ -21,9 +21,9 @@
           >搜索</el-button>
           <el-button
             type="primary"
-            icon="refresh"
-            @click="getTableData"
-          >刷新</el-button>
+            icon="plus"
+            @click="openDialog('add')"
+          >新建标签</el-button>
         </div>
       </div>
 
@@ -40,7 +40,7 @@
         />
         <el-table-column
           align="left"
-          label="分组名称"
+          label="标签名称"
           min-width="180"
           prop="name"
         />
@@ -57,6 +57,29 @@
           min-width="180"
           prop="UpdatedAt"
         />
+        <el-table-column
+          align="left"
+          fixed="right"
+          label="操作"
+          width="200"
+        >
+          <template #default="scope">
+            <el-button
+              icon="edit"
+
+              type="primary"
+              link
+              @click="editTagFunc(scope.row)"
+            >编辑</el-button>
+            <el-button
+              icon="delete"
+
+              type="primary"
+              link
+              @click="deleteTagFunc(scope.row)"
+            >删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
       <el-pagination
         :current-page="page"
@@ -145,15 +168,47 @@
         </div>
       </template>
     </el-drawer>
+    <el-dialog
+      v-model="dialogFormVisible"
+      :before-close="closeDialog"
+      :title="dialogTitle"
+    >
+      <warning-bar title="新增标签" />
+      <el-form
+        ref="apiForm"
+        :model="form"
+        :rules="rules"
+        label-width="80px"
+      >
+        <el-form-item
+          label="名称"
+          prop="name"
+        >
+          <el-input
+            v-model="form.name"
+            autocomplete="off"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="closeDialog">取 消</el-button>
+          <el-button
+            type="primary"
+            @click="enterDialog"
+          >确 定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { getAccountTagInfoList } from '@/api/accoutTag'
+import { getAccountTagInfoList, createAccountTagInfo, updateAccountTagInfo, findAccountTagInfo, deleteAccountTagInfo } from '@/api/accoutTag'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { formatTimeToStr } from '@/utils/date'
 import { ref } from 'vue'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const drawer2 = ref(false)
 const direction = ref('rtl')
@@ -221,7 +276,6 @@ const getTableData = async() => {
           : ''
       })
 
-      console.log('测试', table.data)
       tableData.value = table.data.list
     }, 100)
     total.value = table.data.total
@@ -239,10 +293,123 @@ const fileList = ref([])
 const handleUploadChange = (file, fileListUpdated) => {
   fileList.value = fileListUpdated
   if (fileListUpdated.length > 0) {
-    form.file = fileListUpdated[0].raw
+    form.value.file = fileListUpdated[0].raw
   } else {
-    form.file = null
+    form.value.file = null
   }
+}
+
+const type = ref('')
+
+const dialogTitle = ref('新增标签')
+const dialogFormVisible = ref(false)
+const openDialog = (key) => {
+  switch (key) {
+    case 'add':
+      dialogTitle.value = '新增标签'
+      break
+    case 'edit':
+      dialogTitle.value = '编辑标签'
+      break
+    default:
+      break
+  }
+  type.value = key
+  dialogFormVisible.value = true
+}
+
+const form = ref({
+  name: '',
+  CreatedAt: '',
+  ID: 0,
+  UpdatedAt: ''
+})
+const apiForm = ref(null)
+const initForm = () => {
+  apiForm.value.resetFields()
+  form.value = {
+    name: ''
+  }
+}
+
+const closeDialog = () => {
+  initForm()
+  dialogFormVisible.value = false
+}
+
+const enterDialog = async() => {
+  apiForm.value.validate(async valid => {
+    if (valid) {
+      switch (type.value) {
+        case 'add':
+          {
+            const res = await createAccountTagInfo(form.value)
+            if (res.code === 0) {
+              ElMessage({
+                type: 'success',
+                message: '添加成功',
+                showClose: true
+              })
+            }
+            getTableData()
+            closeDialog()
+          }
+
+          break
+        case 'edit':
+          {
+            const res = await updateAccountTagInfo(form.value)
+            if (res.code === 0) {
+              ElMessage({
+                type: 'success',
+                message: '编辑成功',
+                showClose: true
+              })
+            }
+            getTableData()
+            closeDialog()
+          }
+          break
+        default:
+          // eslint-disable-next-line no-lone-blocks
+          {
+            ElMessage({
+              type: 'error',
+              message: '未知操作',
+              showClose: true
+            })
+          }
+          break
+      }
+    }
+  })
+}
+
+const editTagFunc = async(row) => {
+  const res = await findAccountTagInfo(row.ID)
+  form.value = res.data.reaccountTagInfo
+  openDialog('edit')
+}
+
+const deleteTagFunc = async(row) => {
+  ElMessageBox.confirm('此操作将永久删除标签, 是否继续?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(async() => {
+      const res = await deleteAccountTagInfo(row.ID)
+      if (res.code === 0) {
+        ElMessage({
+          type: 'success',
+          message: '删除成功!'
+        })
+        if (tableData.value.length === 1 && page.value > 1) {
+          page.value--
+        }
+        getTableData()
+      }
+    })
 }
 </script>
 

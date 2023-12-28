@@ -10,11 +10,10 @@ export const createAccountTagInfo = (data) => {
 }
 
 // 删除账号标签
-export const deleteAccountTagInfo = (params) => {
+export const deleteAccountTagInfo = (id) => {
   return service({
-    url: `/accountTagInfo/deleteAccountTagInfo`,
+    url: `/accountTagInfo/deleteAccountTagInfo/${String(id)}`,
     method: 'delete',
-    params
   })
 }
 
@@ -37,9 +36,9 @@ export const updateAccountTagInfo = (data) => {
 }
 
 // 根据ID获取账号标签
-export const findAccountTagInfo = () => {
+export const findAccountTagInfo = (id) => {
   return service({
-    url: `/accountTagInfo/findAccountTagInfo`,
+    url: `/accountTagInfo/findAccountTagInfo/${String(id)}`,
     method: 'get',
   })
 }
