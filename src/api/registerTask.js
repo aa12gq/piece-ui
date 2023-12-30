@@ -36,14 +36,14 @@ export const updateAccountGroupInfo = (data) => {
 
 export const getSubTaskList = (page, pageSize, taskId, phone) => {
   return service({
-    url: `/registerSubTask/getRegisterSubTaskList?page=${page}&pageSize=${pageSize}&main_task_id=${taskId}&phone_number=${phone}`,
+    url: `/registerSubTask/getRegisterSubTaskList?page=${page}&pageSize=${pageSize}&main_task_id=${taskId}&phone=${phone}`,
     method: 'get',
   })
 }
 
 export const DownloadBlockedAccountsAsTxt = (taskId) => {
   return service({
-    url: `/registerNumber/download/blocked/txt/${String(taskId)}`,
+    url: `/registerSubTask/download/blocked/txt/${String(taskId)}`,
     method: 'get',
     responseType: 'blob',
   })
@@ -51,7 +51,7 @@ export const DownloadBlockedAccountsAsTxt = (taskId) => {
 
 export const DownloadBlockedAccountsAsExcel = (taskId) => {
   return service({
-    url: `/registerNumber/download/blocked/excel/${String(taskId)}`,
+    url: `/registerSubTask/download/blocked/excel/${String(taskId)}`,
     method: 'get',
     responseType: 'blob',
   })
@@ -59,7 +59,7 @@ export const DownloadBlockedAccountsAsExcel = (taskId) => {
 
 export const DownloadRiskControlAccountsAsTxt = (taskId) => {
   return service({
-    url: `/registerNumber/download/riskcontrol/txt/${String(taskId)}`,
+    url: `/registerSubTask/download/riskcontrol/txt/${String(taskId)}`,
     method: 'get',
     responseType: 'blob',
   })
@@ -67,7 +67,7 @@ export const DownloadRiskControlAccountsAsTxt = (taskId) => {
 
 export const DownloadRiskControlAccountsAsExcel = (taskId) => {
   return service({
-    url: `/registerNumber/download/riskcontrol/excel/${String(taskId)}`,
+    url: `/registerSubTask/download/riskcontrol/excel/${String(taskId)}`,
     method: 'get',
     responseType: 'blob',
   })
@@ -75,7 +75,7 @@ export const DownloadRiskControlAccountsAsExcel = (taskId) => {
 
 export const DownloadSuccessAccountsAsTxt = (taskId) => {
   return service({
-    url: `/registerNumber/download/success/txt/${String(taskId)}`,
+    url: `/registerSubTask/download/success/txt/${String(taskId)}`,
     method: 'get',
     responseType: 'blob',
   })
@@ -83,7 +83,7 @@ export const DownloadSuccessAccountsAsTxt = (taskId) => {
 
 export const DownloadSuccessAccountsAsExcel = (taskId) => {
   return service({
-    url: `/registerNumber/download/success/excel/${String(taskId)}`,
+    url: `/registerSubTask/download/success/excel/${String(taskId)}`,
     method: 'get',
     responseType: 'blob',
   })

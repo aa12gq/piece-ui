@@ -7,7 +7,7 @@
           v-model="searchText"
           placeholder="请输入任务名称"
           clearable
-          style="width: 200px;"
+          style="width: 200px"
         />
         <el-button
           type="primary"
@@ -18,24 +18,26 @@
           icon="CirclePlus"
           @click="drawer = true"
         >新建任务</el-button>
-        <el-button
-          icon="delete"
-          type="primary"
-          :disabled="multipleSelection.length != 1 ? true : false"
-          @click="pauseTask()"
-        >暂停任务</el-button>
-        <el-button
-          icon="delete"
-          type="primary"
-          :disabled="multipleSelection.length != 1 ? true : false"
+        <el-tooltip placement="top">
+          <template #content> 选择任一任务并暂停。请注意，发送暂停信号后可能会有短暂延迟才能完全停止<br> </template>
+          <el-button
+            icon="Bell"
+            type="primary"
+            :disabled="multipleSelection.length != 1 ? true : false"
+            @click="pauseTask()"
+          >暂停任务</el-button>
+        </el-tooltip>
 
-          @click="resumeTask()"
-        >恢复任务</el-button>
-        <!-- <el-button
-          type="primary"
-          icon="CirclePlus"
-          @click="drawer = true"
-        >导出账号</el-button> -->
+        <el-tooltip placement="top">
+          <template #content> 选择任一已暂停任务。请注意，发送恢复信号后可能会有短暂延迟才能完全停止<br> </template>
+          <el-button
+            icon="Bell"
+            type="primary"
+            :disabled="multipleSelection.length != 1 ? true : false"
+            @click="resumeTask()"
+          >恢复任务</el-button>
+        </el-tooltip>
+
         <el-tooltip
           class="box-item"
           effect="dark"
@@ -59,9 +61,9 @@
       <el-table
         ref="multipleTableRef"
         :data="tableData"
-        :tree-props="{children:'children',hasChildren:'hasChildren'}"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         row-key="authorityId"
-        style="width:100%"
+        style="width: 100%"
         @selection-change="handleSelectionChange"
       >
         <el-table-column
@@ -90,11 +92,11 @@
           label="任务状态"
           min-width="180"
         >
-          <template #default="{row}">
+          <template #default="{ row }">
             <el-button
               :type="getButtonType(row.status)"
               size="small"
-              :loading="row.status=='Running'"
+              :loading="row.status == 'Running'"
               :icon="getButtonIcon(row.status)"
               plain
             >{{ getStatusButtonType(row.status) }}</el-button>
@@ -122,7 +124,16 @@
           align="left"
           label="风控1小时"
           min-width="180"
-          prop="risk_control_count"
+        >
+          <template #default="scope">
+            {{ scope.row.no_routes_count + scope.row.too_recent_count }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          align="left"
+          label="非官方"
+          min-width="180"
+          prop="office_count"
         />
         <el-table-column
           align="left"
@@ -134,13 +145,13 @@
           align="left"
           label="创建时间"
           min-width="180"
-          prop="createdAt"
+          prop="formattedCreatedAt"
         />
         <el-table-column
           align="left"
           label="更新时间"
           min-width="180"
-          prop="updatedAt"
+          prop="formattedUpdatedAt"
         />
         <el-table-column
           align="left"
@@ -149,59 +160,71 @@
           fixed="right"
         >
           <template #default="scope">
-            <el-button
-              icon="Files"
-              type="primary"
-              link
-              @click="$router.push({name:'subtask',params:{id:scope.row.ID}})"
-            >详情</el-button>
-            <el-button
-              icon="Edit"
-              link
-              type="primary"
-            >更新并发数</el-button>
-            <el-button
-              icon="delete"
-              type="primary"
-              link
-              :disabled="scope.row.status == 'Running'"
-              @click="deleteTask(scope.row)"
-            >删除</el-button>
-
-            <el-dropdown
-              trigger="click"
-              class="el-button-like"
-            >
+            <div class="button-group">
               <el-button
-                class="button-with-icon-right ml-3"
+                icon="Files"
                 type="primary"
                 link
-                icon="More"
-              >更多操作</el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item v-if="scope.row.nonDisabledAccounts>0&&scope.row.DisabledAccounts>0">什么都没有</el-dropdown-item>
-                  <el-dropdown-item
-                    @click="downloadBlockedAccountsAsTxt(scope.row)"
-                  >下载封号账号(txt)</el-dropdown-item>
-                  <el-dropdown-item
-                    @click="downloadBlockedAccountsAsExcel(scope.row)"
-                  >下载封号账号(xlsx)</el-dropdown-item>
-                  <el-dropdown-item
-                    @click="downloadRiskControlAccountsAsTxt(scope.row)"
-                  >下载风控账号(txt)</el-dropdown-item>
-                  <el-dropdown-item
-                    @click="downloadRiskControlAccountsAsExcel(scope.row)"
-                  >下载风控账号(xlsx)</el-dropdown-item>
-                  <el-dropdown-item
-                    @click="downloadSuccessAccountsAsTxt(scope.row)"
-                  >下载成功账号(txt)</el-dropdown-item>
-                  <el-dropdown-item
-                    @click="downloadSuccessAccountsAsExcel(scope.row)"
-                  >下载成功账号(xlsx)</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+                @click="
+                  $router.push({
+                    name: 'subtask',
+                    params: { id: scope.row.ID },
+                  })
+                "
+              >详情</el-button>
+              <el-button
+                icon="Edit"
+                link
+                type="primary"
+              >更新并发数</el-button>
+              <el-button
+                icon="delete"
+                type="primary"
+                link
+                :disabled="scope.row.status == 'Running'"
+                @click="deleteTask(scope.row)"
+              >删除</el-button>
+
+              <el-dropdown
+                trigger="click"
+                class="el-button-like"
+              >
+                <el-button
+                  class="button-with-icon-right ml-3"
+                  type="primary"
+                  link
+                  icon="More"
+                >更多操作</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      v-if="
+                        scope.row.nonDisabledAccounts > 0 &&
+                          scope.row.DisabledAccounts > 0
+                      "
+                    >什么都没有</el-dropdown-item>
+                    <el-dropdown-item
+                      @click="downloadBlockedAccountsAsTxt(scope.row)"
+                    >下载封号账号(txt)</el-dropdown-item>
+                    <el-dropdown-item
+                      @click="downloadBlockedAccountsAsExcel(scope.row)"
+                    >下载封号账号(xlsx)</el-dropdown-item>
+                    <el-dropdown-item
+                      @click="downloadRiskControlAccountsAsTxt(scope.row)"
+                    >下载风控账号(txt)</el-dropdown-item>
+                    <el-dropdown-item
+                      @click="downloadRiskControlAccountsAsExcel(scope.row)"
+                    >下载风控账号(xlsx)</el-dropdown-item>
+                    <el-dropdown-item
+                      @click="downloadSuccessAccountsAsTxt(scope.row)"
+                    >下载成功账号(txt)</el-dropdown-item>
+                    <el-dropdown-item
+                      @click="downloadSuccessAccountsAsExcel(scope.row)"
+                    >下载成功账号(xlsx)</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -227,7 +250,6 @@
         :rules="rules"
         label-width="120px"
       >
-
         <el-form-item
           label="任务名称"
           prop="taskName"
@@ -247,7 +269,7 @@
             v-model="form.country"
             filterable
             placeholder="请选择国家区号"
-            style="width: 100%;"
+            style="width: 100%"
           >
             <el-option
               v-for="item in countryCodes"
@@ -270,15 +292,13 @@
             :max="1000"
             style="width: 100%"
           />
-          <span
-            class="text-sm text-orange-300 mt-2 "
-          >当前可用并发数{{
+          <span class="text-sm text-orange-300 mt-2">当前可用并发数{{
             concurrencyInfo.concurrencyLimit -
               concurrencyInfo.currentConcurrency
           }}</span>
           <el-icon
             class="mt-2 cursor-pointer"
-            :class="{ 'rotate': isRefreshing }"
+            :class="{ rotate: isRefreshing }"
             style="margin-left: 4px"
             :size="12"
             @click="RefreshAvailableConcurrency()"
@@ -303,7 +323,6 @@
               </el-select>
             </el-form-item>
           </el-col>
-
         </el-row>
         <!-- 标签和账号类型分为一行两列 -->
         <el-row :gutter="20">
@@ -323,7 +342,6 @@
               </el-select>
             </el-form-item>
           </el-col>
-
         </el-row>
         <!-- 标签和账号类型分为一行两列 -->
         <el-row :gutter="20" />
@@ -366,7 +384,6 @@
             重置
           </el-button>
         </el-form-item>
-
       </el-form>
     </el-drawer>
     <el-drawer
@@ -415,15 +432,12 @@ import {
   DownloadSuccessAccountsAsExcel,
   deleteRegisterTask,
   PauseTask,
-  ResumeTask
+  ResumeTask,
 } from '@/api/registerTask'
 import WarningBar from '@/components/warningBar/warningBar.vue'
-import { formatTimeToStr } from '@/utils/date'
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  getAvailableConcurrency,
-} from '@/api/user'
+import { getAvailableConcurrency } from '@/api/user'
 import { getAccountTagInfoList } from '@/api/accoutTag'
 import { getAccountGroupInfoList } from '@/api/accoutGroup'
 
@@ -441,8 +455,7 @@ function confirmClick() {
     .then(() => {
       drawer2.value = false
     })
-    .catch(() => {
-    })
+    .catch(() => {})
 }
 
 defineOptions({
@@ -470,7 +483,7 @@ const handleSizeChange = (val) => {
 
 const concurrencyInfo = ref({
   concurrencyLimit: 0,
-  currentConcurrency: 0
+  currentConcurrency: 0,
 })
 
 const RefreshAvailableConcurrency = async() => {
@@ -494,14 +507,14 @@ const getTableData = async(sortProp, sortOrder) => {
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
-      table.data.list.forEach((item) => {
-        item.createdAt = item.createdAt
-          ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
-          : ''
-        item.updatedAt = item.updatedAt
-          ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
-          : ''
-      })
+      // table.data.list.forEach((item) => {
+      //   item.createdAt = item.createdAt
+      //     ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
+      //     : ''
+      //   item.updatedAt = item.updatedAt
+      //     ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
+      //     : ''
+      // })
       refreshAccoutTagInfo()
       refreshAccoutGroupInfo()
       tableData.value = table.data.list
@@ -775,11 +788,11 @@ const rules = {
   taskName: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
   file: [{ required: true, message: '请上传文件', trigger: 'change' }],
   countryCode: [
-    { required: true, message: '请选择国家区号', trigger: 'change' }
+    { required: true, message: '请选择国家区号', trigger: 'change' },
   ],
   concurrency: [
     { required: true, message: '请输入并发数', trigger: 'blur' },
-    { type: 'number', message: '并发数必须为数字值', trigger: 'blur' }
+    { type: 'number', message: '并发数必须为数字值', trigger: 'blur' },
   ],
 }
 
@@ -881,21 +894,19 @@ const downloadFile = async(downloadFunc, row, fileName, delay = 3000) => {
 const accoutGroupInfo = ref([])
 // 查询
 const refreshAccoutGroupInfo = async() => {
-  const result = await getAccountGroupInfoList(
-    1,
-    100
-  )
-  if (result.code === 0) {
+  const result = await getAccountGroupInfoList(1, 100)
+  console.log('测试', result)
+  if (result.code === 0 && Array.isArray(result.data.list)) {
     accoutGroupInfo.value = []
     setTimeout(() => {
-      result.data.list.forEach((item) => {
-        item.createdAt = item.createdAt
-          ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
-          : ''
-        item.updatedAt = item.updatedAt
-          ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss')
-          : ''
-      })
+      // result.data.list.forEach((item) => {
+      //   item.createdAt = item.createdAt
+      //     ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
+      //     : ''
+      //   item.updatedAt = item.updatedAt
+      //     ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
+      //     : ''
+      // })
 
       accoutGroupInfo.value = result.data.list
     }, 100)
@@ -908,21 +919,18 @@ const refreshAccoutGroupInfo = async() => {
 const accoutTagInfo = ref([])
 
 const refreshAccoutTagInfo = async() => {
-  const info = await getAccountTagInfoList(
-    1,
-    100
-  )
+  const info = await getAccountTagInfoList(1, 100)
   if (info.code === 0) {
     accoutTagInfo.value = []
     setTimeout(() => {
-      info.data.list.forEach((item) => {
-        item.CreatedAt = item.CreatedAt
-          ? formatTimeToStr(item.CreatedAt, 'yyyy-MM-dd hh:mm:ss')
-          : ''
-        item.UpdatedAt = item.UpdatedAt
-          ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss')
-          : ''
-      })
+      // info.data.list.forEach((item) => {
+      //   item.reatedAt = item.CreatedAt
+      //     ? formatTimeToStr(item.CreatedAt, 'yyyy-MM-dd hh:mm:ss')
+      //     : ''
+      //   item.UpdatedAt = item.UpdatedAt
+      //     ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss')
+      //     : ''
+      // })
 
       accoutTagInfo.value = info.data.list
       console.log('ceshi1', accoutTagInfo.value)
@@ -1002,4 +1010,3 @@ const handleSelectionChange = (val) => {
   }
 }
 </style>
-

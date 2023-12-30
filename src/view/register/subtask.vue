@@ -63,7 +63,7 @@
         <el-table-column
           label="任务ID"
           min-width="180"
-          prop="MainTaskID"
+          prop="main_task_id"
         />
         <el-table-column
           align="left"
@@ -230,6 +230,8 @@ const getStatusButtonType = (status) => {
       return '运行中'
     case 'Pause':
       return '已暂停'
+    case 'Disabled':
+      return '不可用'
     default:
       return ''
   }
@@ -247,6 +249,8 @@ const getButtonType = (status) => {
     case 'Running':
       return 'info'
     case 'Pause':
+      return 'danger'
+    case 'Disabled':
       return 'danger'
     default:
       return ''
