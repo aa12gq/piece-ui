@@ -71,13 +71,13 @@
               link
               @click="editGroupFunc(scope.row)"
             >编辑</el-button>
-            <el-button
+            <!-- <el-button
               icon="delete"
 
               type="primary"
               link
               @click="deleteGroupFunc(scope.row)"
-            >删除</el-button>
+            >删除</el-button> -->
           </template>
         </el-table-column>
       </el-table>
