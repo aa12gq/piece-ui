@@ -38,6 +38,12 @@
           >恢复任务</el-button>
         </el-tooltip>
 
+        <el-button
+          type="primary"
+          icon="refresh"
+          @click="getTableData()"
+        >刷新</el-button>
+
         <el-tooltip
           class="box-item"
           effect="dark"
@@ -156,7 +162,7 @@
         <el-table-column
           align="left"
           label="操作"
-          width="360"
+          width="260"
           fixed="right"
         >
           <template #default="scope">
@@ -172,11 +178,11 @@
                   })
                 "
               >详情</el-button>
-              <el-button
+              <!-- <el-button
                 icon="Edit"
                 link
                 type="primary"
-              >更新并发数</el-button>
+              >更新并发数</el-button> -->
               <el-button
                 icon="delete"
                 type="primary"
@@ -203,6 +209,12 @@
                           scope.row.DisabledAccounts > 0
                       "
                     >什么都没有</el-dropdown-item>
+                    <el-dropdown-item
+                      @click="downloadNonExecutionAccountsAsTxt(scope.row)"
+                    >下载未执行账号(txt)</el-dropdown-item>
+                    <el-dropdown-item
+                      @click="downloadNonExecutionAccountsAsExcel(scope.row)"
+                    >下载未执行账号(excel)</el-dropdown-item>
                     <el-dropdown-item
                       @click="downloadBlockedAccountsAsTxt(scope.row)"
                     >下载封号账号(txt)</el-dropdown-item>
@@ -306,11 +318,12 @@
         </el-form-item>
 
         <!-- 标签和账号类型分为一行两列 -->
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row>
+          <el-col >
             <!-- 标签选项 -->
             <el-form-item label="标签">
               <el-select
+              class="w-full"
                 v-model="form.tag_id"
                 placeholder="请选择标签"
               >
@@ -325,12 +338,13 @@
           </el-col>
         </el-row>
         <!-- 标签和账号类型分为一行两列 -->
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row >
+          <el-col >
             <!-- 标签选项 -->
             <el-form-item label="分组">
               <el-select
                 v-model="form.group_id"
+                class="w-full"
                 placeholder="请选择分组"
               >
                 <el-option
@@ -345,12 +359,12 @@
         </el-row>
         <!-- 标签和账号类型分为一行两列 -->
         <el-row :gutter="20" />
-        <el-form-item label="任务操作">
+        <!-- <el-form-item label="任务操作">
           <el-radio-group v-model="form.immediate">
             <el-radio :label="true">立即开始</el-radio>
             <el-radio :label="false">仅创建任务</el-radio>
           </el-radio-group>
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item
           label="上传文件"
           prop="file"
@@ -430,6 +444,8 @@ import {
   DownloadRiskControlAccountsAsExcel,
   DownloadSuccessAccountsAsTxt,
   DownloadSuccessAccountsAsExcel,
+  DownloadNonExecutionAccountsAsTxt,
+  DownloadNonExecutionAccountsAsExcel,
   deleteRegisterTask,
   PauseTask,
   ResumeTask,
@@ -779,9 +795,9 @@ const form = reactive({
   country: '',
   concurrency: 1,
   file: null,
-  tag_id: 0,
+  tag_id: null,
   immediate: true, // 默认为立即开始
-  group_id: 0,
+  group_id: null,
 })
 
 const rules = {
@@ -845,19 +861,29 @@ const downloadRiskControlAccountsAsTxt = async(row) => {
   await downloadFile(DownloadRiskControlAccountsAsTxt, row, '风控账号.txt')
 }
 
-// 以excel格式下载风控账目
+// 以excel格式下载风控账号
 const downloadRiskControlAccountsAsExcel = async(row) => {
   await downloadFile(DownloadRiskControlAccountsAsExcel, row, '风控账号.xlsx')
 }
 
-// 以excel格式下载成功账目
+// 以excel格式下载成功账号
 const downloadSuccessAccountsAsTxt = async(row) => {
   await downloadFile(DownloadSuccessAccountsAsTxt, row, '成功账号.txt')
 }
 
-// 以excel格式下载成功账目
+// 以excel格式下载成功账号
 const downloadSuccessAccountsAsExcel = async(row) => {
   await downloadFile(DownloadSuccessAccountsAsExcel, row, '成功账号.xlsx')
+}
+
+// 以excel格式下载未执行账号
+const downloadNonExecutionAccountsAsTxt = async(row) => {
+  await downloadFile(DownloadNonExecutionAccountsAsTxt, row, '未执行账号.txt')
+}
+
+// 以excel格式下载未执行账号
+const downloadNonExecutionAccountsAsExcel = async(row) => {
+  await downloadFile(DownloadNonExecutionAccountsAsExcel, row, '未执行账号.xlsx')
 }
 
 // 通用的下载文件函数

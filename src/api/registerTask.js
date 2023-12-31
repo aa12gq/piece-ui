@@ -89,6 +89,22 @@ export const DownloadSuccessAccountsAsExcel = (taskId) => {
   })
 }
 
+export const DownloadNonExecutionAccountsAsTxt = (taskId) => {
+  return service({
+    url: `/registerSubTask/download/non_execution/txt/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
+  })
+}
+
+export const DownloadNonExecutionAccountsAsExcel = (taskId) => {
+  return service({
+    url: `/registerSubTask/download/non_execution/excel/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
+  })
+}
+
 export const deleteRegisterTask = (data) => {
   return service({
     url: `/registerTask/deleteRegisterTask`,
