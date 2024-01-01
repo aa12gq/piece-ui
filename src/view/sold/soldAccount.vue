@@ -9,7 +9,7 @@
       align="left"
       label="国家"
       min-width="180"
-      prop="country"
+      prop="country_name"
     />
     <el-table-column
       align="left"

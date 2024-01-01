@@ -278,16 +278,16 @@
           prop="country"
         >
           <el-select
-            v-model="form.country"
+            v-model="form.country_id"
             filterable
             placeholder="请选择国家区号"
             style="width: 100%"
           >
             <el-option
-              v-for="item in countryCodes"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              v-for="item in countryInfoList"
+              :key="item.ID"
+              :label="`${item.code} ${item.name} ${item.dialingCode}`"
+              :value="item.ID"
             />
           </el-select>
         </el-form-item>
@@ -319,12 +319,12 @@
 
         <!-- 标签和账号类型分为一行两列 -->
         <el-row>
-          <el-col >
+          <el-col>
             <!-- 标签选项 -->
             <el-form-item label="标签">
               <el-select
-              class="w-full"
                 v-model="form.tag_id"
+                class="w-full"
                 placeholder="请选择标签"
               >
                 <el-option
@@ -338,8 +338,8 @@
           </el-col>
         </el-row>
         <!-- 标签和账号类型分为一行两列 -->
-        <el-row >
-          <el-col >
+        <el-row>
+          <el-col>
             <!-- 标签选项 -->
             <el-form-item label="分组">
               <el-select
@@ -400,37 +400,6 @@
         </el-form-item>
       </el-form>
     </el-drawer>
-    <el-drawer
-      v-model="drawer2"
-      :direction="direction"
-    >
-      <template #header>
-        <h4>set title by slot</h4>
-      </template>
-      <template #default>
-        <div>
-          <el-radio
-            v-model="radio1"
-            label="Option 1"
-            size="large"
-          >Option 1</el-radio>
-          <el-radio
-            v-model="radio1"
-            label="Option 2"
-            size="large"
-          >Option 2</el-radio>
-        </div>
-      </template>
-      <template #footer>
-        <div style="flex: auto">
-          <el-button @click="cancelClick">cancel</el-button>
-          <el-button
-            type="primary"
-            @click="confirmClick"
-          >confirm</el-button>
-        </div>
-      </template>
-    </el-drawer>
   </div>
 </template>
 
@@ -450,28 +419,16 @@ import {
   PauseTask,
   ResumeTask,
 } from '@/api/registerTask'
+import { getCountryInfoList } from '@/api/country'
 import WarningBar from '@/components/warningBar/warningBar.vue'
-import { ref, reactive } from 'vue'
+import { ref, nextTick, reactive, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAvailableConcurrency } from '@/api/user'
 import { getAccountTagInfoList } from '@/api/accoutTag'
 import { getAccountGroupInfoList } from '@/api/accoutGroup'
 
-const drawer2 = ref(false)
-const direction = ref('rtl')
-
 const handleClose = (done) => {
   done()
-}
-function cancelClick() {
-  drawer2.value = false
-}
-function confirmClick() {
-  ElMessageBox.confirm(`Are you confirm to chose ${radio1.value} ?`)
-    .then(() => {
-      drawer2.value = false
-    })
-    .catch(() => {})
 }
 
 defineOptions({
@@ -496,6 +453,12 @@ const handleSizeChange = (val) => {
   pageSize.value = val
   getTableData()
 }
+
+watch(() => drawer.value, (value) => {
+  if (value) {
+    initForm()
+  }
+})
 
 const concurrencyInfo = ref({
   concurrencyLimit: 0,
@@ -523,24 +486,13 @@ const getTableData = async(sortProp, sortOrder) => {
   if (table.code === 0) {
     tableData.value = []
     setTimeout(() => {
-      // table.data.list.forEach((item) => {
-      //   item.createdAt = item.createdAt
-      //     ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
-      //     : ''
-      //   item.updatedAt = item.updatedAt
-      //     ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
-      //     : ''
-      // })
-      refreshAccoutTagInfo()
-      refreshAccoutGroupInfo()
       tableData.value = table.data.list
-      console.log(tableData.value)
 
-      if (shouldAutoRefresh(table.data.list)) {
-        startAutoRefresh()
-      } else {
-        stopAutoRefresh()
-      }
+      // if (shouldAutoRefresh(table.data.list)) {
+      //   startAutoRefresh()
+      // } else {
+      //   stopAutoRefresh()
+      // }
     }, 100)
     total.value = table.data.total
     page.value = table.data.page
@@ -702,81 +654,6 @@ const getButtonIcon = (status) => {
       return ''
   }
 }
-
-const countryCodes = [
-  { label: '中国 (China) (+86)', value: '+86' },
-  { label: '美国 (United States) (+1)', value: '+1' },
-  { label: '加拿大 (Canada) (+1)', value: '+1' },
-  { label: '俄罗斯 (Russia) (+7)', value: '+7' },
-  { label: '埃及 (Egypt) (+20)', value: '+20' },
-  { label: '南非 (South Africa) (+27)', value: '+27' },
-  { label: '希腊 (Greece) (+30)', value: '+30' },
-  { label: '荷兰 (Netherlands) (+31)', value: '+31' },
-  { label: '比利时 (Belgium) (+32)', value: '+32' },
-  { label: '法国 (France) (+33)', value: '+33' },
-  { label: '西班牙 (Spain) (+34)', value: '+34' },
-  { label: '匈牙利 (Hungary) (+36)', value: '+36' },
-  { label: '意大利 (Italy) (+39)', value: '+39' },
-  { label: '罗马尼亚 (Romania) (+40)', value: '+40' },
-  { label: '瑞士 (Switzerland) (+41)', value: '+41' },
-  { label: '奥地利 (Austria) (+43)', value: '+43' },
-  { label: '英国 (United Kingdom) (+44)', value: '+44' },
-  { label: '丹麦 (Denmark) (+45)', value: '+45' },
-  { label: '瑞典 (Sweden) (+46)', value: '+46' },
-  { label: '挪威 (Norway) (+47)', value: '+47' },
-  { label: '波兰 (Poland) (+48)', value: '+48' },
-  { label: '德国 (Germany) (+49)', value: '+49' },
-  { label: '秘鲁 (Peru) (+51)', value: '+51' },
-  { label: '墨西哥 (Mexico) (+52)', value: '+52' },
-  { label: '古巴 (Cuba) (+53)', value: '+53' },
-  { label: '阿根廷 (Argentina) (+54)', value: '+54' },
-  { label: '巴西 (Brazil) (+55)', value: '+55' },
-  { label: '智利 (Chile) (+56)', value: '+56' },
-  { label: '哥伦比亚 (Colombia) (+57)', value: '+57' },
-  { label: '委内瑞拉 (Venezuela) (+58)', value: '+58' },
-  { label: '马来西亚 (Malaysia) (+60)', value: '+60' },
-  { label: '澳大利亚 (Australia) (+61)', value: '+61' },
-  { label: '印度尼西亚 (Indonesia) (+62)', value: '+62' },
-  { label: '菲律宾 (Philippines) (+63)', value: '+63' },
-  { label: '新西兰 (New Zealand) (+64)', value: '+64' },
-  { label: '新加坡 (Singapore) (+65)', value: '+65' },
-  { label: '泰国 (Thailand) (+66)', value: '+66' },
-  { label: '日本 (Japan) (+81)', value: '+81' },
-  { label: '韩国 (South Korea) (+82)', value: '+82' },
-  { label: '越南 (Vietnam) (+84)', value: '+84' },
-  { label: '土耳其 (Turkey) (+90)', value: '+90' },
-  { label: '印度 (India)(+91)', value: '+91' },
-  { label: '巴基斯坦 (Pakistan) (+92)', value: '+92' },
-  { label: '阿富汗 (Afghanistan) (+93)', value: '+93' },
-  { label: '斯里兰卡 (Sri Lanka) (+94)', value: '+94' },
-  { label: '缅甸 (Myanmar) (+95)', value: '+95' },
-  { label: '伊朗 (Iran) (+98)', value: '+98' },
-  { label: '摩洛哥 (Morocco) (+212)', value: '+212' },
-  { label: '阿尔及利亚 (Algeria) (+213)', value: '+213' },
-  { label: '突尼斯 (Tunisia) (+216)', value: '+216' },
-  { label: '利比亚 (Libya) (+218)', value: '+218' },
-  { label: '冈比亚 (Gambia) (+220)', value: '+220' },
-  { label: '塞内加尔 (Senegal) (+221)', value: '+221' },
-  { label: '毛里塔尼亚 (Mauritania) (+222)', value: '+222' },
-  { label: '马里 (Mali) (+223)', value: '+223' },
-  { label: '几内亚 (Guinea) (+224)', value: '+224' },
-  { label: '科特迪瓦 (Ivory Coast) (+225)', value: '+225' },
-  { label: '布基纳法索 (Burkina Faso) (+226)', value: '+226' },
-  { label: '尼日尔 (Niger) (+227)', value: '+227' },
-  { label: '多哥 (Togo) (+228)', value: '+228' },
-  { label: '贝宁 (Benin) (+229)', value: '+229' },
-  { label: '毛里求斯 (Mauritius) (+230)', value: '+230' },
-  { label: '利比里亚 (Liberia) (+231)', value: '+231' },
-  { label: '塞拉利昂 (Sierra Leone) (+232)', value: '+232' },
-  { label: '加纳 (Ghana) (+233)', value: '+233' },
-  { label: '尼日利亚 (Nigeria) (+234)', value: '+234' },
-  { label: '乍得 (Chad) (+235)', value: '+235' },
-  { label: '中非共和国 (Central African Republic) (+236)', value: '+236' },
-  { label: '喀麦隆 (Cameroon) (+237)', value: '+237' },
-  { label: '佛得角 (Cape Verde) (+238)', value: '+238' },
-  { label: '圣多美和普林西比 (São Tomé and Príncipe) (+239)', value: '+239' },
-]
-
 // 新建任务
 const formRef = ref(null)
 
@@ -792,13 +669,42 @@ const handleUploadChange = (file, fileListUpdated) => {
 
 const form = reactive({
   taskName: '',
-  country: '',
+  country_id: null,
   concurrency: 1,
   file: null,
   tag_id: null,
   immediate: true, // 默认为立即开始
   group_id: null,
 })
+
+const initForm = () => {
+  // 使用 nextTick 确保在 DOM 更新完成后执行 resetFields
+  nextTick(() => {
+    // 检查 Form.value 是否已经被正确设置为表单实例
+    if (Form.value) {
+      Form.value.resetFields()
+    } else {
+      // 如果 Form.value 是 null，这可能意味着 <el-form> 还未挂载
+      // 或 ref="Form" 未能正确绑定。请检查你的模板部分。
+      console.error('The form reference \'Form\' is not available.')
+    }
+  })
+
+  refreshAccoutTagInfo()
+  refreshAccoutGroupInfo()
+  refreshCountryInfoList()
+
+  // 重置 form 对象以匹配默认值
+  form.value = {
+    taskName: '',
+    country: null,
+    concurrency: 1,
+    file: null,
+    tag_id: null,
+    immediate: true, // 默认为立即开始
+    group_id: null,
+  }
+}
 
 const rules = {
   taskName: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
@@ -819,7 +725,7 @@ const submitForm = async() => {
   // 创建一个 FormData 对象
   const formData = new FormData()
   formData.append('taskName', form.taskName)
-  formData.append('country', form.country)
+  formData.append('country_id', form.country_id)
   formData.append('concurrency', form.concurrency)
   formData.append('tag_id', form.tag_id)
   formData.append('group_id', form.group_id)
@@ -830,11 +736,13 @@ const submitForm = async() => {
   }
 
   try {
-    console.log(form)
     // 调用 API 并传入 FormData
-    await createRegisterTask(formData)
-    ElMessage.success('创建成功！')
-    handleClose()
+    const res = await createRegisterTask(formData)
+    if (res.code === 0) {
+      ElMessage.success('创建成功！')
+    }
+
+    // handleClose()
   } catch (error) {
     ElMessage.error(error.message || '创建任务失败')
   }
@@ -921,19 +829,9 @@ const accoutGroupInfo = ref([])
 // 查询
 const refreshAccoutGroupInfo = async() => {
   const result = await getAccountGroupInfoList(1, 100)
-  console.log('测试', result)
   if (result.code === 0 && Array.isArray(result.data.list)) {
     accoutGroupInfo.value = []
     setTimeout(() => {
-      // result.data.list.forEach((item) => {
-      //   item.createdAt = item.createdAt
-      //     ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
-      //     : ''
-      //   item.updatedAt = item.updatedAt
-      //     ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
-      //     : ''
-      // })
-
       accoutGroupInfo.value = result.data.list
     }, 100)
     total.value = result.data.total
@@ -949,21 +847,24 @@ const refreshAccoutTagInfo = async() => {
   if (info.code === 0) {
     accoutTagInfo.value = []
     setTimeout(() => {
-      // info.data.list.forEach((item) => {
-      //   item.reatedAt = item.CreatedAt
-      //     ? formatTimeToStr(item.CreatedAt, 'yyyy-MM-dd hh:mm:ss')
-      //     : ''
-      //   item.UpdatedAt = item.UpdatedAt
-      //     ? formatTimeToStr(item.UpdatedAt, 'yyyy-MM-dd hh:mm:ss')
-      //     : ''
-      // })
-
       accoutTagInfo.value = info.data.list
-      console.log('ceshi1', accoutTagInfo.value)
     }, 100)
     total.value = info.data.total
     page.value = info.data.page
     pageSize.value = info.data.pageSize
+  }
+}
+const countryInfoList = ref([])
+const refreshCountryInfoList = async() => {
+  const result = await getCountryInfoList(1, 300)
+  if (result.code === 0 && Array.isArray(result.data.list)) {
+    countryInfoList.value = []
+    setTimeout(() => {
+      countryInfoList.value = result.data.list
+    }, 100)
+    total.value = result.data.total
+    page.value = result.data.page
+    pageSize.value = result.data.pageSize
   }
 }
 

@@ -47,17 +47,19 @@
         label-width="80px"
         class="space-y-6"
       >
-        <el-select
-          v-model="form.country"
-          placeholder="请选择国家"
-          class="w-full"
-        >
-          <el-option
-            :key="1"
-            label="US 美国 +1"
-            :value="1"
-          />
-        </el-select>
+      <el-select
+            v-model="form.country_id"
+            filterable
+            placeholder="请选择国家区号"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in countryInfoList"
+              :key="item.ID"
+              :label="`${item.code} ${item.name} ${item.dialingCode}`"
+              :value="item.ID"
+            />
+          </el-select>
         <el-select
           v-model.number="form.group_id"
           placeholder="请选择分组"
@@ -116,6 +118,8 @@ import { exportAccount } from '@/api/soldAccount'
 import soldAccountRecord from './record.vue'
 import soldAccout from './soldAccount.vue'
 import { ref, nextTick } from 'vue'
+import { getCountryInfoList } from '@/api/country'
+
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAccountTagInfoList } from '@/api/accoutTag'
@@ -130,20 +134,31 @@ const handleClick = (tab, event) => {
 const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
+const countryInfoList = ref([])
+const refreshCountryInfoList = async() => {
+  const result = await getCountryInfoList(1, 300)
+  if (result.code === 0 && Array.isArray(result.data.list)) {
+    countryInfoList.value = []
+    setTimeout(() => {
+      countryInfoList.value = result.data.list
+    }, 100)
+    total.value = result.data.total
+    page.value = result.data.page
+    pageSize.value = result.data.pageSize
+  }
+}
 
 const handlePageChange = (val) => {
   page.value = val
-  getTableData()
 }
 
 const handleSizeChange = (val) => {
   pageSize.value = val
-  getTableData()
 }
 
 const form = ref({
   count: null,
-  country: '',
+  country_id: '',
   format: null,
   tag_id: null,
   group_id: null,
@@ -165,11 +180,12 @@ const initForm = () => {
   // 刷新账户组信息和标签信息
   refreshAccoutGroupInfo()
   refreshAccoutTagInfo()
+  refreshCountryInfoList()
 
   // 重置 form 对象以匹配默认值
   form.value = {
     count: null,
-    country: '',
+    country_id: null,
     format: null,
     tag_id: null,
     group_id: null,
@@ -204,19 +220,9 @@ const accoutGroupInfo = ref([])
 // 查询
 const refreshAccoutGroupInfo = async() => {
   const result = await getAccountGroupInfoList(1, 100)
-  console.log('测试', result)
   if (result.code === 0 && Array.isArray(result.data.list)) {
     accoutGroupInfo.value = []
     setTimeout(() => {
-      // result.data.list.forEach((item) => {
-      //   item.createdAt = item.createdAt
-      //     ? formatTimeToStr(item.createdAt, 'yyyy-MM-dd hh:mm:ss')
-      //     : ''
-      //   item.updatedAt = item.updatedAt
-      //     ? formatTimeToStr(item.updatedAt, 'yyyy-MM-dd hh:mm:ss')
-      //     : ''
-      // })
-
       accoutGroupInfo.value = result.data.list
     }, 100)
     total.value = result.data.total
