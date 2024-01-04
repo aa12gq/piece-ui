@@ -740,6 +740,9 @@ const submitForm = async() => {
     const res = await createRegisterTask(formData)
     if (res.code === 0) {
       ElMessage.success('创建成功！')
+      setTimeout(() => {
+        getTableData()
+      }, 500);
     }
 
     // handleClose()
