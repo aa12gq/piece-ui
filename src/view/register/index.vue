@@ -16,7 +16,9 @@
         <el-button
           type="primary"
           icon="CirclePlus"
-          @click="drawer = true"
+          @click="()=>{drawer = true
+                       RefreshAvailableConcurrency()
+          }"
         >新建任务</el-button>
         <el-tooltip placement="top">
           <template #content> 选择任一任务并暂停。请注意，发送暂停信号后可能会有短暂延迟才能完全停止<br> </template>
@@ -742,7 +744,7 @@ const submitForm = async() => {
       ElMessage.success('创建成功！')
       setTimeout(() => {
         getTableData()
-      }, 500);
+      }, 500)
     }
 
     // handleClose()
