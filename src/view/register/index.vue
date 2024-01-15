@@ -80,25 +80,25 @@
         />
         <el-table-column
           label="ID"
-          min-width="180"
+          min-width="100"
           prop="ID"
         />
         <el-table-column
           align="left"
           label="任务名称"
-          min-width="180"
+          min-width="130"
           prop="task_name"
         />
-        <el-table-column
+        <!-- <el-table-column
           align="left"
           label="文件名称"
           min-width="180"
           prop="file_name"
-        />
+        /> -->
         <el-table-column
           align="left"
           label="任务状态"
-          min-width="180"
+          min-width="150"
         >
           <template #default="{ row }">
             <el-button
@@ -113,25 +113,25 @@
         <el-table-column
           align="left"
           label="并发数"
-          min-width="180"
+          min-width="130"
           prop="concurrency"
         />
         <el-table-column
           align="left"
           label="成功"
-          min-width="180"
+          min-width="130"
           prop="success_count"
         />
         <el-table-column
           align="left"
           label="封号"
-          min-width="180"
+          min-width="130"
           prop="blocked_count"
         />
         <el-table-column
           align="left"
           label="风控1小时"
-          min-width="180"
+          min-width="130"
         >
           <template #default="scope">
             {{ scope.row.no_routes_count + scope.row.too_recent_count }}
@@ -140,14 +140,14 @@
         <el-table-column
           align="left"
           label="非官方"
-          min-width="180"
+          min-width="130"
           prop="office_count"
         />
         <el-table-column
           align="left"
           label="总数"
-          min-width="180"
-          prop="totalNumber"
+          min-width="100"
+          prop="target_success_count"
         />
         <el-table-column
           align="left"
@@ -318,6 +318,19 @@
             @click="RefreshAvailableConcurrency()"
           ><Refresh /></el-icon>
         </el-form-item>
+        <el-form-item
+          label="目标总数"
+          prop="targetCount"
+        >
+          <el-input
+            v-model.number="form.targetCount"
+            type="number"
+            placeholder="请输入目标总数"
+            :min="1"
+            :max="1000"
+            style="width: 100%"
+          />
+        </el-form-item>
 
         <!-- 标签和账号类型分为一行两列 -->
         <el-row>
@@ -367,7 +380,7 @@
             <el-radio :label="false">仅创建任务</el-radio>
           </el-radio-group>
         </el-form-item> -->
-        <el-form-item
+        <!-- <el-form-item
           label="上传文件"
           prop="file"
         >
@@ -380,7 +393,7 @@
             <el-button slot="trigger">选择文件</el-button>
           </el-upload>
           <div v-if="form.file">{{ form.file.name }}</div>
-        </el-form-item>
+        </el-form-item> -->
 
         <el-form-item>
           <el-button
@@ -677,6 +690,7 @@ const form = reactive({
   tag_id: null,
   immediate: true, // 默认为立即开始
   group_id: null,
+  targetCount: null,
 })
 
 const initForm = () => {
@@ -701,16 +715,15 @@ const initForm = () => {
     taskName: '',
     country: null,
     concurrency: 1,
-    file: null,
     tag_id: null,
     immediate: true, // 默认为立即开始
     group_id: null,
+    targetCount: null,
   }
 }
 
 const rules = {
   taskName: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
-  file: [{ required: true, message: '请上传文件', trigger: 'change' }],
   countryCode: [
     { required: true, message: '请选择国家区号', trigger: 'change' },
   ],
@@ -732,6 +745,8 @@ const submitForm = async() => {
   formData.append('tag_id', form.tag_id)
   formData.append('group_id', form.group_id)
   formData.append('immediate', form.immediate)
+  formData.append('targetCount', form.targetCount)
+
   // 检查是否有文件要上传
   if (form.file) {
     formData.append('file', form.file, form.file.name)
