@@ -1,0 +1,4 @@
+/*! 
+ Build based on gin-vue-admin 
+ Time : 1705585352000 */
+System.register(["./soldAccount.vue_vue_type_script_setup_true_lang-legacy-d93bc0f9.js","./index-legacy-77ffdb44.js","./table-column-legacy-8084bc99.js","./scrollbar-legacy-f5250367.js","./index-legacy-cad41cc7.js","./isUndefined-legacy-9b9dfd8c.js","./_Uint8Array-legacy-e53c7e8a.js","./_initCloneObject-legacy-37a25bd7.js","./hasIn-legacy-94b595ef.js","./checkbox-legacy-a94e8b38.js","./isEqual-legacy-fadf5600.js","./tag-legacy-bb2ff10c.js","./debounce-legacy-30562790.js","./index-legacy-2f12294e.js","./tooltip-legacy-b3c86740.js","./popper-legacy-78a44115.js"],(function(l,e){"use strict";return{setters:[function(e){e._,l("default",e._)},null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],execute:function(){}}}));
