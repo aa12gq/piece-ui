@@ -139,6 +139,12 @@
         </el-table-column>
         <el-table-column
           align="left"
+          label="累计消耗(抢到卡)"
+          min-width="150"
+          prop="get_phone_count"
+        />
+        <el-table-column
+          align="left"
           label="非官方"
           min-width="130"
           prop="office_count"
@@ -318,19 +324,6 @@
             @click="RefreshAvailableConcurrency()"
           ><Refresh /></el-icon>
         </el-form-item>
-        <el-form-item
-          label="目标总数"
-          prop="targetCount"
-        >
-          <el-input
-            v-model.number="form.targetCount"
-            type="number"
-            placeholder="请输入目标总数"
-            :min="1"
-            :max="1000"
-            style="width: 100%"
-          />
-        </el-form-item>
 
         <!-- 标签和账号类型分为一行两列 -->
         <el-row>
@@ -372,6 +365,26 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row>
+          <el-col>
+            <!-- 标签选项 -->
+            <el-form-item label="注册模式">
+              <el-radio-group
+                v-model="mode"
+                class="ml-4"
+              >
+                <el-radio
+                  label="0"
+                  size="large"
+                >文本上传</el-radio>
+                <el-radio
+                  label="1"
+                  size="large"
+                >卡商注册</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <!-- 标签和账号类型分为一行两列 -->
         <el-row :gutter="20" />
         <!-- <el-form-item label="任务操作">
@@ -380,7 +393,8 @@
             <el-radio :label="false">仅创建任务</el-radio>
           </el-radio-group>
         </el-form-item> -->
-        <!-- <el-form-item
+        <el-form-item
+          v-if="mode === '0'"
           label="上传文件"
           prop="file"
         >
@@ -393,7 +407,21 @@
             <el-button slot="trigger">选择文件</el-button>
           </el-upload>
           <div v-if="form.file">{{ form.file.name }}</div>
-        </el-form-item> -->
+        </el-form-item>
+        <el-form-item
+          v-if="mode === '1'"
+          label="目标总数"
+          prop="targetCount"
+        >
+          <el-input
+            v-model.number="form.targetCount"
+            type="number"
+            placeholder="请输入目标总数"
+            :min="1"
+            :max="1000"
+            style="width: 100%"
+          />
+        </el-form-item>
 
         <el-form-item>
           <el-button
@@ -451,7 +479,7 @@ defineOptions({
 })
 
 const drawer = ref(false)
-
+const mode = ref('0')
 const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
@@ -691,6 +719,7 @@ const form = reactive({
   immediate: true, // 默认为立即开始
   group_id: null,
   targetCount: null,
+  mode: '',
 })
 
 const initForm = () => {
@@ -713,7 +742,7 @@ const initForm = () => {
   // 重置 form 对象以匹配默认值
   form.value = {
     taskName: '',
-    country: null,
+    country_id: null,
     concurrency: 1,
     tag_id: null,
     immediate: true, // 默认为立即开始
@@ -724,12 +753,33 @@ const initForm = () => {
 
 const rules = {
   taskName: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
-  countryCode: [
-    { required: true, message: '请选择国家区号', trigger: 'change' },
+  country_id: [
+    { required: true, message: '请选择国家区号', trigger: 'blur' },
+  ],
+  mode: [
+    { required: true, message: '请选择注册模式', trigger: 'blur' },
   ],
   concurrency: [
     { required: true, message: '请输入并发数', trigger: 'blur' },
     { type: 'number', message: '并发数必须为数字值', trigger: 'blur' },
+  ],
+  file: [
+    { validator: (rule, value, callback) => {
+      if (mode.value === '0' && !value) {
+        callback(new Error('请上传文件'))
+      } else {
+        callback()
+      }
+    }, trigger: 'change' }
+  ],
+  targetCount: [
+    { validator: (rule, value, callback) => {
+      if (mode.value === '1' && !value) {
+        callback(new Error('请输入目标数量'))
+      } else {
+        callback()
+      }
+    }, trigger: 'blur' }
   ],
 }
 
@@ -745,12 +795,16 @@ const submitForm = async() => {
   formData.append('tag_id', form.tag_id)
   formData.append('group_id', form.group_id)
   formData.append('immediate', form.immediate)
-  formData.append('targetCount', form.targetCount)
-
-  // 检查是否有文件要上传
-  if (form.file) {
-    formData.append('file', form.file, form.file.name)
+  if (mode.value === '0') {
+    // 检查是否有文件要上传
+    if (form.file) {
+      formData.append('file', form.file, form.file.name)
+    }
   }
+  if (mode.value === '1') {
+    formData.append('targetCount', form.targetCount)
+  }
+  formData.append('mode', mode.value)
 
   try {
     // 调用 API 并传入 FormData
