@@ -1,15 +1,8 @@
-FROM node:16
+FROM nginx
 
-WORKDIR /gva_web/
-COPY . .
+RUN rm /etc/nginx/conf.d/default.conf
 
-RUN yarn && yarn build
+ADD default.conf /etc/nginx/conf.d/
 
-FROM nginx:alpine
-LABEL MAINTAINER="SliverHorn@sliver_horn@qq.com"
-
-COPY .docker-compose/nginx/conf.d/my.conf /etc/nginx/conf.d/my.conf
-COPY --from=0 /gva_web/dist /usr/share/nginx/html
-RUN cat /etc/nginx/nginx.conf
-RUN cat /etc/nginx/conf.d/my.conf
-RUN ls -al /usr/share/nginx/html
+COPY dist/ /usr/share/nginx/html/
+COPY /cert/ /usr/share/nginx/cert/
