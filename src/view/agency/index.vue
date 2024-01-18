@@ -1,6 +1,8 @@
 <template>
     <div class="authority">
-        <warning-bar title="{rand_num}纯数字随机,{rand}字母+数字随机，{city}自动定位城市" />
+        <warning-bar title="{rand_num}纯数字随机，{rand}字母+数字随机，{city}自动定位城市"/>
+        <warning-bar title="参考：socks5://aabb-region-{city}-session-{rand}-sessTime-20:dsfasdf@sdfdsf.aabb.vip（这个代表自动选择对应国家代理和20分钟内同一个号固定ip）"/>
+        
       <div class="gva-table-box">
         <div class="gva-btn-list">
           <!-- 按钮区域 -->
@@ -76,14 +78,14 @@
   
                 type="primary"
                 link
-                @click="editTagFunc(scope.row)"
+                @click="editProxyFunc(scope.row)"
               >编辑</el-button>
               <!-- <el-button
                 icon="delete"
   
                 type="primary"
                 link
-                @click="deleteTagFunc(scope.row)"
+                @click="deleteProxyFunc(scope.row)"
               >删除</el-button> -->
             </template>
           </el-table-column>
@@ -147,7 +149,7 @@
   </template>
   
   <script setup>
-//   import { getProxyInfoList, createProxyInfo, updateProxyInfo, findProxyInfo, deleteProxyInfo } from '@/api/accoutTag'
+//   import { getProxyInfoList, createProxyInfo, updateProxyInfo, findProxyInfo, deleteProxyInfo } from '@/api/accoutProxy'
   import WarningBar from '@/components/warningBar/warningBar.vue'
   import { formatTimeToStr } from '@/utils/date'
   import { ref } from 'vue'
@@ -327,15 +329,15 @@
       }
     })
   }
+
   
-  
-  const editTagFunc = async(row) => {
+  const editProxyFunc = async(row) => {
     const res = await findProxyInfo(row.ID)
     form.value = res.data.reProxyInfo
     openDialog('edit')
   }
   
-  const deleteTagFunc = async(row) => {
+  const deleteProxyFunc = async(row) => {
     ElMessageBox.confirm('此操作将永久删除标签, 是否继续?', '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
