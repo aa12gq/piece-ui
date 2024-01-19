@@ -47,19 +47,19 @@
         label-width="80px"
         class="space-y-6"
       >
-      <el-select
-            v-model="form.country_id"
-            filterable
-            placeholder="请选择国家区号"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="item in countryInfoList"
-              :key="item.ID"
-              :label="`${item.code} ${item.name} ${item.dialingCode}`"
-              :value="item.ID"
-            />
-          </el-select>
+        <el-select
+          v-model="form.country_id"
+          filterable
+          placeholder="请选择国家区号"
+          style="width: 100%"
+        >
+          <el-option
+            v-for="item in countryInfoList"
+            :key="item.ID"
+            :label="`${item.code} ${item.name} ${item.dialingCode}`"
+            :value="item.ID"
+          />
+        </el-select>
         <el-select
           v-model.number="form.group_id"
           placeholder="请选择分组"
@@ -247,32 +247,52 @@ const refreshAccoutTagInfo = async() => {
 }
 
 // 文件下载函数
-const downloadFile = async(downloadFunc, fileName) => {
-  try {
-    ElMessage.info('准备下载，请稍候...')
-    const response = await downloadFunc()
+// 通用的下载文件函数
+const downloadFile = async(downloadFunc) => {
+  // 显示准备下载的消息
+  ElMessage.info('准备下载，请稍候...')
 
+  try {
+    const response = await downloadFunc()
     if (response && response.data) {
-      // 确保response是Blob对象
+      // 提取文件名
+      const contentDisposition = response.headers['content-disposition']
+      let fileName = 'download.txt' // 默认文件名
+
+      if (contentDisposition) {
+        const filenameMatch =
+          contentDisposition.match(/filename\*?=UTF-8''(.+?)(;|$)/) ||
+          contentDisposition.match(/filename="?(.+?)"?(;|$)/)
+        if (filenameMatch && filenameMatch.length > 1) {
+          fileName = decodeURIComponent(filenameMatch[1])
+        }
+      }
+
+      console.log(`开始下载 ${fileName}`, response)
       const blob = new Blob([response.data], { type: 'text/plain' })
 
-      setTimeout(() => {
-        // 延迟下载
-        const url = window.URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', fileName)
-        document.body.appendChild(link)
-        link.click()
-        URL.revokeObjectURL(url) // 先释放URL
-        document.body.removeChild(link) // 然后移除元素
-        ElMessage.success('下载成功')
-      }, 3000)
+      // 创建下载链接并模拟点击进行下载
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', fileName)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      // 下载成功提示
+      ElMessage.success('下载成功')
     } else {
-      ElMessage.error('下载失败，没有获取到文件内容')
+      ElMessage.error('下载失败：服务器未返回文件')
     }
   } catch (error) {
-    ElMessage.error('下载出错')
+    // 显示具体的错误信息
+    const errorMessage =
+      error.response && error.response.data
+        ? error.response.data.message
+        : '下载出错'
+    ElMessage.error(errorMessage)
     console.error('下载出错', error)
   }
 }
@@ -282,7 +302,7 @@ const enterDialog = async() => {
     if (valid) {
       switch (type.value) {
         case 'export':
-          await downloadFile(() => exportAccount(form.value), '导出账号.txt')
+          await downloadFile(() => exportAccount(form.value))
           break
         case 'edit':
           break

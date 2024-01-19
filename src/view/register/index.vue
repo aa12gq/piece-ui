@@ -936,9 +936,6 @@ const refreshCountryInfoList = async() => {
     setTimeout(() => {
       countryInfoList.value = result.data.list
     }, 100)
-    total.value = result.data.total
-    page.value = result.data.page
-    pageSize.value = result.data.pageSize
   }
 }
 
