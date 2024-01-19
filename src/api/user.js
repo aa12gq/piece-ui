@@ -165,10 +165,24 @@ export const resetPassword = (data) => {
   })
 }
 
-
 export const getAvailableConcurrency = () => {
   return service({
     url: '/user/getAvailableConcurrency',
+    method: 'get',
+  })
+}
+
+export const setFireFoxToken = (data) => {
+  return service({
+    url: '/user/setFireFoxToken',
+    method: 'post',
+    data: data
+  })
+}
+
+export const getFireFoxToken = () => {
+  return service({
+    url: '/user/getFireFoxToken',
     method: 'get',
   })
 }

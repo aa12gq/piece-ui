@@ -16,12 +16,17 @@
         <el-button
           type="primary"
           icon="CirclePlus"
-          @click="()=>{drawer = true
-                       RefreshAvailableConcurrency()
-          }"
+          @click="
+            () => {
+              drawer = true;
+              RefreshAvailableConcurrency();
+            }
+          "
         >新建任务</el-button>
         <el-tooltip placement="top">
-          <template #content> 选择任一任务并暂停。请注意，发送暂停信号后可能会有短暂延迟才能完全停止<br> </template>
+          <template #content>
+            选择任一任务并暂停。请注意，发送暂停信号后可能会有短暂延迟才能完全停止<br>
+          </template>
           <el-button
             icon="Bell"
             type="primary"
@@ -31,7 +36,9 @@
         </el-tooltip>
 
         <el-tooltip placement="top">
-          <template #content> 选择任一已暂停任务。请注意，发送恢复信号后可能会有短暂延迟才能完全停止<br> </template>
+          <template #content>
+            选择任一已暂停任务。请注意，发送恢复信号后可能会有短暂延迟才能完全停止<br>
+          </template>
           <el-button
             icon="Bell"
             type="primary"
@@ -108,6 +115,15 @@
               :icon="getButtonIcon(row.status)"
               plain
             >{{ getStatusButtonType(row.status) }}</el-button>
+          </template>
+        </el-table-column>
+        <el-table-column
+          align="left"
+          label="注册模式"
+          min-width="130"
+        >
+          <template #default="{ row }">
+            {{ row.mode == 0 ? "文本上传" : "卡商注册" }}
           </template>
         </el-table-column>
         <el-table-column
@@ -220,27 +236,27 @@
                     <el-dropdown-item
                       @click="downloadNonExecutionAccountsAsTxt(scope.row)"
                     >下载未执行账号(txt)</el-dropdown-item>
-                    <el-dropdown-item
+                    <!-- <el-dropdown-item
                       @click="downloadNonExecutionAccountsAsExcel(scope.row)"
-                    >下载未执行账号(excel)</el-dropdown-item>
+                    >下载未执行账号(excel)</el-dropdown-item> -->
                     <el-dropdown-item
                       @click="downloadBlockedAccountsAsTxt(scope.row)"
                     >下载封号账号(txt)</el-dropdown-item>
-                    <el-dropdown-item
+                    <!-- <el-dropdown-item
                       @click="downloadBlockedAccountsAsExcel(scope.row)"
-                    >下载封号账号(xlsx)</el-dropdown-item>
+                    >下载封号账号(xlsx)</el-dropdown-item> -->
                     <el-dropdown-item
                       @click="downloadRiskControlAccountsAsTxt(scope.row)"
                     >下载风控账号(txt)</el-dropdown-item>
-                    <el-dropdown-item
+                    <!-- <el-dropdown-item
                       @click="downloadRiskControlAccountsAsExcel(scope.row)"
-                    >下载风控账号(xlsx)</el-dropdown-item>
+                    >下载风控账号(xlsx)</el-dropdown-item> -->
                     <el-dropdown-item
                       @click="downloadSuccessAccountsAsTxt(scope.row)"
                     >下载成功账号(txt)</el-dropdown-item>
-                    <el-dropdown-item
+                    <!-- <el-dropdown-item
                       @click="downloadSuccessAccountsAsExcel(scope.row)"
-                    >下载成功账号(xlsx)</el-dropdown-item>
+                    >下载成功账号(xlsx)</el-dropdown-item> -->
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -376,15 +392,20 @@
                 <el-radio
                   label="0"
                   size="large"
-                >文本上传</el-radio>
+                >文本模式</el-radio>
                 <el-radio
                   label="1"
                   size="large"
-                >卡商注册</el-radio>
+                  @click="()=>{
+                    refreshProxyInfoList()
+                    refreshCardMerchantInfoList()
+                  }"
+                >卡商模式</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
         </el-row>
+
         <!-- 标签和账号类型分为一行两列 -->
         <el-row :gutter="20" />
         <!-- <el-form-item label="任务操作">
@@ -393,6 +414,7 @@
             <el-radio :label="false">仅创建任务</el-radio>
           </el-radio-group>
         </el-form-item> -->
+
         <el-form-item
           v-if="mode === '0'"
           label="上传文件"
@@ -410,6 +432,40 @@
         </el-form-item>
         <el-form-item
           v-if="mode === '1'"
+          label="选择卡商"
+        >
+          <el-select
+            v-model="form.card_merchant_id"
+            class="w-full"
+            placeholder="请选择卡商"
+          >
+            <el-option
+              v-for="item in CardMerchantInfoList"
+              :key="item.ID"
+              :label="item.name"
+              :value="item.ID"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          v-if="mode === '1'"
+          label="选择代理"
+        >
+          <el-select
+            v-model="form.proxy_id"
+            class="w-full"
+            placeholder="请选择代理"
+          >
+            <el-option
+              v-for="item in ProxyInfoList"
+              :key="item.ID"
+              :label="item.name"
+              :value="item.ID"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          v-if="mode === '1'"
           label="目标总数"
           prop="targetCount"
         >
@@ -422,6 +478,7 @@
             style="width: 100%"
           />
         </el-form-item>
+        <el-row> <el-form-item /></el-row>
 
         <el-form-item>
           <el-button
@@ -469,6 +526,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAvailableConcurrency } from '@/api/user'
 import { getAccountTagInfoList } from '@/api/accoutTag'
 import { getAccountGroupInfoList } from '@/api/accoutGroup'
+import { getCardMerchantInfoList } from '@/api/cardMerchant'
+import {
+  getProxyInfoList,
+} from '@/api/proxy'
 
 const handleClose = (done) => {
   done()
@@ -497,11 +558,14 @@ const handleSizeChange = (val) => {
   getTableData()
 }
 
-watch(() => drawer.value, (value) => {
-  if (value) {
-    initForm()
+watch(
+  () => drawer.value,
+  (value) => {
+    if (value) {
+      initForm()
+    }
   }
-})
+)
 
 const concurrencyInfo = ref({
   concurrencyLimit: 0,
@@ -531,16 +595,39 @@ const getTableData = async(sortProp, sortOrder) => {
     setTimeout(() => {
       tableData.value = table.data.list
 
-      // if (shouldAutoRefresh(table.data.list)) {
-      //   startAutoRefresh()
-      // } else {
-      //   stopAutoRefresh()
-      // }
+      if (shouldAutoRefresh(table.data.list)) {
+        startAutoRefresh()
+      } else {
+        stopAutoRefresh()
+      }
     }, 100)
     total.value = table.data.total
     page.value = table.data.page
     pageSize.value = table.data.pageSize
   }
+}
+
+// 开启自动刷新
+let refreshTimer = null
+const startAutoRefresh = () => {
+  if (!refreshTimer) {
+    refreshTimer = setInterval(() => {
+      getTableData()
+    }, 5000)
+  }
+}
+
+// 停止自动刷新
+const stopAutoRefresh = () => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}
+
+const shouldAutoRefresh = (list) => {
+  // 如果列表中存在至少一个状态为 'Running' 的项，则返回true
+  return list.some((item) => item.status === 'Running')
 }
 
 getTableData()
@@ -720,6 +807,8 @@ const form = reactive({
   group_id: null,
   targetCount: null,
   mode: '',
+  card_merchant_id: null,
+  proxy_id: null,
 })
 
 const initForm = () => {
@@ -731,7 +820,7 @@ const initForm = () => {
     } else {
       // 如果 Form.value 是 null，这可能意味着 <el-form> 还未挂载
       // 或 ref="Form" 未能正确绑定。请检查你的模板部分。
-      console.error('The form reference \'Form\' is not available.')
+      console.error("The form reference 'Form' is not available.")
     }
   })
 
@@ -748,38 +837,53 @@ const initForm = () => {
     immediate: true, // 默认为立即开始
     group_id: null,
     targetCount: null,
+    card_merchant_id: null,
+    proxy_id: null,
   }
 }
 
 const rules = {
   taskName: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
-  country_id: [
-    { required: true, message: '请选择国家区号', trigger: 'blur' },
+  country_id: [{ required: true, message: '请选择国家区号', trigger: 'blur' }],
+  proxy_id: [
+    { required: true, message: '请选择代理', trigger: 'blur' },
+    { validator: (rule, value, callback) => {
+      if (value === 0) {
+        callback(new Error('代理ID不能为0'))
+      } else {
+        callback()
+      }
+    }, trigger: 'change'
+    }
   ],
-  mode: [
-    { required: true, message: '请选择注册模式', trigger: 'blur' },
-  ],
+  mode: [{ required: true, message: '请选择注册模式', trigger: 'blur' }],
   concurrency: [
     { required: true, message: '请输入并发数', trigger: 'blur' },
     { type: 'number', message: '并发数必须为数字值', trigger: 'blur' },
   ],
   file: [
-    { validator: (rule, value, callback) => {
-      if (mode.value === '0' && !value) {
-        callback(new Error('请上传文件'))
-      } else {
-        callback()
-      }
-    }, trigger: 'change' }
+    {
+      validator: (rule, value, callback) => {
+        if (mode.value === '0' && !value) {
+          callback(new Error('请上传文件'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change',
+    },
   ],
   targetCount: [
-    { validator: (rule, value, callback) => {
-      if (mode.value === '1' && !value) {
-        callback(new Error('请输入目标数量'))
-      } else {
-        callback()
-      }
-    }, trigger: 'blur' }
+    {
+      validator: (rule, value, callback) => {
+        if (mode.value === '1' && !value) {
+          callback(new Error('请输入目标数量'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur',
+    },
   ],
 }
 
@@ -795,6 +899,9 @@ const submitForm = async() => {
   formData.append('tag_id', form.tag_id)
   formData.append('group_id', form.group_id)
   formData.append('immediate', form.immediate)
+  formData.append('card_merchant_id', form.card_merchant_id)
+  formData.append('proxy_id', form.proxy_id)
+
   if (mode.value === '0') {
     // 检查是否有文件要上传
     if (form.file) {
@@ -865,7 +972,11 @@ const downloadNonExecutionAccountsAsTxt = async(row) => {
 
 // 以excel格式下载未执行账号
 const downloadNonExecutionAccountsAsExcel = async(row) => {
-  await downloadFile(DownloadNonExecutionAccountsAsExcel, row, '未执行账号.xlsx')
+  await downloadFile(
+    DownloadNonExecutionAccountsAsExcel,
+    row,
+    '未执行账号.xlsx'
+  )
 }
 
 // 通用的下载文件函数
@@ -908,26 +1019,46 @@ const refreshAccoutGroupInfo = async() => {
     setTimeout(() => {
       accoutGroupInfo.value = result.data.list
     }, 100)
-    total.value = result.data.total
-    page.value = result.data.page
-    pageSize.value = result.data.pageSize
+  }
+}
+
+const CardMerchantInfoList = ref([])
+// 查询
+const refreshCardMerchantInfoList = async() => {
+  const result = await getCardMerchantInfoList(1, 200)
+  if (result.code === 0 && Array.isArray(result.data.list)) {
+    CardMerchantInfoList.value = []
+    setTimeout(() => {
+      CardMerchantInfoList.value = result.data.list
+    }, 100)
+  }
+}
+
+const ProxyInfoList = ref([])
+
+const refreshProxyInfoList = async() => {
+  const result = await getProxyInfoList(1, 200)
+  if (result.code === 0 && Array.isArray(result.data.list)) {
+    ProxyInfoList.value = []
+    setTimeout(() => {
+      console.log(result.data.list)
+      ProxyInfoList.value = result.data.list
+    }, 100)
   }
 }
 
 const accoutTagInfo = ref([])
 
 const refreshAccoutTagInfo = async() => {
-  const info = await getAccountTagInfoList(1, 100)
+  const info = await getAccountTagInfoList(1, 200)
   if (info.code === 0) {
     accoutTagInfo.value = []
     setTimeout(() => {
       accoutTagInfo.value = info.data.list
     }, 100)
-    total.value = info.data.total
-    page.value = info.data.page
-    pageSize.value = info.data.pageSize
   }
 }
+
 const countryInfoList = ref([])
 const refreshCountryInfoList = async() => {
   const result = await getCountryInfoList(1, 300)

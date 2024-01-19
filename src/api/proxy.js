@@ -3,7 +3,7 @@ import service from '@/utils/request'
 // 创建账号代理
 export const createProxyInfo = (data) => {
   return service({
-    url: `/ProxyInfo/createProxyInfo`,
+    url: `/proxyInfo/createProxyInfo`,
     method: 'post',
     data
   })
@@ -12,7 +12,7 @@ export const createProxyInfo = (data) => {
 // 删除账号代理
 export const deleteProxyInfo = (id) => {
   return service({
-    url: `/ProxyInfo/deleteProxyInfo/${String(id)}`,
+    url: `/proxyInfo/deleteProxyInfo/${String(id)}`,
     method: 'delete',
   })
 }
@@ -20,7 +20,7 @@ export const deleteProxyInfo = (id) => {
 // 批量删除账号代理
 export const deleteProxyInfoByIds = (params) => {
   return service({
-    url: `/ProxyInfo/deleteProxyInfoByIds`,
+    url: `/proxyInfo/deleteProxyInfoByIds`,
     method: 'delete',
     params
   })
@@ -29,7 +29,7 @@ export const deleteProxyInfoByIds = (params) => {
 // 更新账号代理
 export const updateProxyInfo = (data) => {
   return service({
-    url: `/ProxyInfo/updateProxyInfo`,
+    url: `/proxyInfo/updateProxyInfo`,
     method: 'put',
     data
   })
@@ -38,7 +38,7 @@ export const updateProxyInfo = (data) => {
 // 根据ID获取账号代理
 export const findProxyInfo = (id) => {
   return service({
-    url: `/ProxyInfo/findProxyInfo/${String(id)}`,
+    url: `/proxyInfo/findProxyInfo/${String(id)}`,
     method: 'get',
   })
 }
@@ -46,7 +46,7 @@ export const findProxyInfo = (id) => {
 // 获取账号代理列表
 export const getProxyInfoList = (page, pageSize) => {
   return service({
-    url: `/ProxyInfo/getProxyInfoList?page=${page}&pageSize=${pageSize}`,
+    url: `/proxyInfo/getProxyInfoList?page=${page}&pageSize=${pageSize}`,
     method: 'get',
   })
 }
