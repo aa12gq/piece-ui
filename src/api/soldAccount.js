@@ -62,3 +62,27 @@ export const getSoldAccountInfoList = (page, pageSize) => {
     method: 'get',
   })
 }
+
+// 获取卖号记录列表
+export const getSoldAccountRecordInfoList = (page, pageSize) => {
+  return service({
+    url: `/soldAccountRecordInfo/getSoldAccountRecordInfoList?page=${page}&pageSize=${pageSize}`,
+    method: 'get',
+  })
+}
+
+// 下载记录列表
+export const downloadSoldAccountRecord = (id) => {
+  return service({
+    url: `/soldAccountRecordInfo/download/${String(id)}`,
+    method: 'get',
+    responseType: 'blob'
+  })
+}
+
+export const clearAccountRecord = () => {
+  return service({
+    url: `/soldAccountRecordInfo/clear`,
+    method: 'post'
+  })
+}

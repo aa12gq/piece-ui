@@ -5,6 +5,10 @@
         type="primary"
         @click="openDialog('export')"
       >导出账号</el-button>
+      <el-button
+        type="primary"
+        @click="clear"
+      >一键清空卖号记录</el-button>
       <!-- <el-button type="danger">全量导出不标已售</el-button>
       <el-button type="danger">全量删除已售账号</el-button> -->
     </div>
@@ -99,6 +103,11 @@
             label="6列数据格式(逗号分割)"
             :value="1"
           />
+          <el-option
+            :key="2"
+            label="007数据格式(xlex)"
+            :value="2"
+          />
         </el-select>
       </el-form>
       <template #footer>
@@ -114,7 +123,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { exportAccount } from '@/api/soldAccount'
+import { exportAccount, clearAccountRecord } from '@/api/soldAccount'
 import soldAccountRecord from './record.vue'
 import soldAccout from './soldAccount.vue'
 import { ref, nextTick } from 'vue'
@@ -318,6 +327,29 @@ const enterDialog = async() => {
   })
 }
 
+
+const clear = (row) => {
+  ElMessageBox.confirm('此操作将永久删除所有卖号记录, 是否继续?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(async() => {
+      const res = await clearAccountRecord()
+      if (res.code === 0 || res == null) {
+        ElMessage({
+          type: 'success',
+          message: '清除成功 !',
+        })
+      }
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '已取消删除',
+      })
+    })
+}
 </script>
 <style>
 .demo-tabs > .el-tabs__content {

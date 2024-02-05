@@ -11,12 +11,19 @@
         ]"
         @click="changeShadow()"
       />
-      <el-aside class="main-cont gva-aside" :style="{ width: asideWidth() }">
+      <el-aside
+        class="main-cont gva-aside"
+        :style="{ width: asideWidth() }"
+      >
         <div
           class="min-h-[60px] text-center transition-all duration-300 flex items-center justify-center gap-2"
           :style="{ background: backgroundColor }"
         >
-          <img alt class="w-9 h-9 p-1" :src="$GIN_VUE_ADMIN.appLogo" />
+          <img
+            alt
+            class="w-9 h-9 p-1"
+            :src="$GIN_VUE_ADMIN.appLogo"
+          >
           <div
             v-if="isSider"
             class="inline-flex text-white font-bold text-2xl"
@@ -58,7 +65,10 @@
                           v-if="isCollapse"
                           class="gvaIcon gvaIcon-arrow-double-right"
                         />
-                        <div v-else class="gvaIcon gvaIcon-arrow-double-left" />
+                        <div
+                          v-else
+                          class="gvaIcon gvaIcon-arrow-double-left"
+                        />
                       </div>
                     </el-col>
                     <el-col
@@ -71,14 +81,16 @@
                       class="flex items-center"
                     >
                       <!-- 修改为手机端不显示顶部标签 -->
-                      <el-breadcrumb v-show="!isMobile" class="breadcrumb">
+                      <el-breadcrumb
+                        v-show="!isMobile"
+                        class="breadcrumb"
+                      >
                         <el-breadcrumb-item
                           v-for="item in matched.slice(1, matched.length)"
                           :key="item.path"
-                          >{{
-                            fmtTitle(item.meta.title, route)
-                          }}</el-breadcrumb-item
-                        >
+                        >{{
+                          fmtTitle(item.meta.title, route)
+                        }}</el-breadcrumb-item>
                       </el-breadcrumb>
                     </el-col>
                     <el-col
@@ -90,6 +102,20 @@
                       class="flex items-center justify-end"
                     >
                       <div class="mr-1.5 flex items-center">
+                        <el-button
+                          icon="Clock"
+                          :type="remainingTime.color"
+                          class="max-h-fit mr-6"
+                        >
+                          到期时间:
+                          {{
+                            remainingTime.expired
+                              ? '已过期' + remainingTime.days + '天'
+                              : remainingTime.days >= 1
+                                ? remainingTime.days + '天'
+                                : remainingTime.hours + '小时' + remainingTime.minutes + '分' + remainingTime.seconds + '秒'
+                          }}
+                        </el-button>
                         <Search />
                         <el-dropdown>
                           <div
@@ -102,8 +128,7 @@
                               <span
                                 v-show="!isMobile"
                                 style="margin-left: 5px"
-                                >{{ userStore.userInfo.nickName }}</span
-                              >
+                              >{{ userStore.userInfo.nickName }}</span>
                               <el-icon>
                                 <arrow-down />
                               </el-icon>
@@ -147,14 +172,14 @@
                                   </div>
                                 </div>
                               </el-dropdown-item>
-                              <el-dropdown-item icon="avatar" @click="toPerson"
-                                >个人信息</el-dropdown-item
-                              >
+                              <el-dropdown-item
+                                icon="avatar"
+                                @click="toPerson"
+                              >个人信息</el-dropdown-item>
                               <el-dropdown-item
                                 icon="reading-lamp"
                                 @click="userStore.LoginOut"
-                                >登 出</el-dropdown-item
-                              >
+                              >登 出</el-dropdown-item>
                             </el-dropdown-menu>
                           </template>
                         </el-dropdown>
@@ -170,9 +195,19 @@
             <HistoryComponent ref="layoutHistoryComponent" />
           </div>
         </transition>
-        <router-view v-if="reloadFlag" v-slot="{ Component }" class="admin-box">
-          <div v-loading="loadingFlag" element-loading-text="正在加载中">
-            <transition mode="out-in" name="el-fade-in-linear">
+        <router-view
+          v-if="reloadFlag"
+          v-slot="{ Component }"
+          class="admin-box"
+        >
+          <div
+            v-loading="loadingFlag"
+            element-loading-background="rgba(0, 0, 0, 0)"
+          >
+            <transition
+              mode="out-in"
+              name="el-fade-in-linear"
+            >
               <keep-alive :include="routerStore.keepAliveRouters">
                 <component :is="Component" />
               </keep-alive>
@@ -188,179 +223,206 @@
 </template>
 
 <script setup>
-import Aside from "@/view/layout/aside/index.vue";
-import HistoryComponent from "@/view/layout/aside/historyComponent/history.vue";
-import Search from "@/view/layout/search/search.vue";
-import BottomInfo from "@/view/layout/bottomInfo/bottomInfo.vue";
-import CustomPic from "@/components/customPic/index.vue";
-import CommandMenu from "@/components/commandMenu/index.vue";
-import Setting from "./setting/index.vue";
-import { setUserAuthority } from "@/api/user";
-import { emitter } from "@/utils/bus.js";
-import { computed, ref, onMounted, nextTick } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import { useRouterStore } from "@/pinia/modules/router";
-import { fmtTitle } from "@/utils/fmtRouterTitle";
-import { useUserStore } from "@/pinia/modules/user";
+import Aside from '@/view/layout/aside/index.vue'
+import HistoryComponent from '@/view/layout/aside/historyComponent/history.vue'
+import Search from '@/view/layout/search/search.vue'
+import BottomInfo from '@/view/layout/bottomInfo/bottomInfo.vue'
+import CustomPic from '@/components/customPic/index.vue'
+import CommandMenu from '@/components/commandMenu/index.vue'
+import Setting from './setting/index.vue'
+import { setUserAuthority } from '@/api/user'
+import { emitter } from '@/utils/bus.js'
+import { computed, ref, onMounted, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useRouterStore } from '@/pinia/modules/router'
+import { fmtTitle } from '@/utils/fmtRouterTitle'
+import { useUserStore } from '@/pinia/modules/user'
 
 defineOptions({
-  name: "Layout",
-});
+  name: 'Layout',
+})
 
-const router = useRouter();
-const route = useRoute();
-const routerStore = useRouterStore();
+const router = useRouter()
+const route = useRoute()
+const routerStore = useRouterStore()
 // 三种窗口适配
-const isCollapse = ref(false);
-const isSider = ref(true);
-const isMobile = ref(false);
+const isCollapse = ref(false)
+const isSider = ref(true)
+const isMobile = ref(false)
 
-const first = ref("");
-const dialogVisible = ref(false);
+const first = ref('')
+const dialogVisible = ref(false)
 const initPage = () => {
   // 判断当前用户的操作系统
-  if (window.localStorage.getItem("osType") === "WIN") {
-    first.value = "Ctrl";
+  if (window.localStorage.getItem('osType') === 'WIN') {
+    first.value = 'Ctrl'
   } else {
-    first.value = "⌘";
+    first.value = '⌘'
   }
   // 当用户同时按下ctrl和k键的时候
   const handleKeyDown = (e) => {
-    if (e.ctrlKey && e.key === "k") {
+    if (e.ctrlKey && e.key === 'k') {
       // 阻止浏览器默认事件
-      e.preventDefault();
-      handleCommand();
+      e.preventDefault()
+      handleCommand()
     }
-  };
-  window.addEventListener("keydown", handleKeyDown);
-
-  const screenWidth = document.body.clientWidth;
-  if (screenWidth < 1000) {
-    isMobile.value = true;
-    isSider.value = false;
-    isCollapse.value = true;
-  } else if (screenWidth >= 1000 && screenWidth < 1200) {
-    isMobile.value = false;
-    isSider.value = false;
-    isCollapse.value = true;
-  } else {
-    isMobile.value = false;
-    isSider.value = true;
-    isCollapse.value = false;
   }
-};
+  window.addEventListener('keydown', handleKeyDown)
 
-initPage();
+  const screenWidth = document.body.clientWidth
+  if (screenWidth < 1000) {
+    isMobile.value = true
+    isSider.value = false
+    isCollapse.value = true
+  } else if (screenWidth >= 1000 && screenWidth < 1200) {
+    isMobile.value = false
+    isSider.value = false
+    isCollapse.value = true
+  } else {
+    isMobile.value = false
+    isSider.value = true
+    isCollapse.value = false
+  }
+}
 
-const command = ref();
+initPage()
+
+const command = ref()
 const handleCommand = () => {
-  command.value.open();
-};
+  command.value.open()
+}
 
-const loadingFlag = ref(false);
+const loadingFlag = ref(false)
 onMounted(() => {
   // 挂载一些通用的事件
-  emitter.emit("collapse", isCollapse.value);
-  emitter.emit("mobile", isMobile.value);
-  emitter.on("reload", reload);
-  emitter.on("showLoading", () => {
-    loadingFlag.value = true;
-  });
-  emitter.on("closeLoading", () => {
-    loadingFlag.value = false;
-  });
+  emitter.emit('collapse', isCollapse.value)
+  emitter.emit('mobile', isMobile.value)
+  emitter.on('reload', reload)
+  emitter.on('showLoading', () => {
+    loadingFlag.value = true
+  })
+  emitter.on('closeLoading', () => {
+    loadingFlag.value = false
+  })
   window.onresize = () => {
     return (() => {
-      initPage();
-      emitter.emit("collapse", isCollapse.value);
-      emitter.emit("mobile", isMobile.value);
-    })();
-  };
-  if (userStore.loadingInstance) {
-    userStore.loadingInstance.close();
+      initPage()
+      emitter.emit('collapse', isCollapse.value)
+      emitter.emit('mobile', isMobile.value)
+    })()
   }
-});
+  if (userStore.loadingInstance) {
+    userStore.loadingInstance.close()
+  }
+})
 
-const userStore = useUserStore();
+const userStore = useUserStore()
 
 const asideWidth = () => {
   if (isMobile.value) {
-    return isCollapse.value ? "0px" : "220px";
+    return isCollapse.value ? '0px' : '220px'
   }
-  return isCollapse.value ? "54px" : "220px";
-};
+  return isCollapse.value ? '54px' : '220px'
+}
 
 const getAsideWidth = () => {
-  if (isMobile.value) return "0px";
-  return isCollapse.value ? "54px" : "220px";
-};
+  if (isMobile.value) return '0px'
+  return isCollapse.value ? '54px' : '220px'
+}
 
 const textColor = computed(() => {
-  if (userStore.sideMode === "dark") {
-    return "#fff";
-  } else if (userStore.sideMode === "light") {
-    return "#191a23";
+  if (userStore.sideMode === 'dark') {
+    return '#fff'
+  } else if (userStore.sideMode === 'light') {
+    return '#191a23'
   } else {
-    return userStore.baseColor;
+    return userStore.baseColor
   }
-});
+})
 
 const backgroundColor = computed(() => {
-  if (userStore.sideMode === "dark") {
-    return "#191a23";
-  } else if (userStore.sideMode === "light") {
-    return "#fff";
+  if (userStore.sideMode === 'dark') {
+    return '#191a23'
+  } else if (userStore.sideMode === 'light') {
+    return '#fff'
   } else {
-    return userStore.sideMode;
+    return userStore.sideMode
   }
-});
+})
 
-const matched = computed(() => route.meta.matched);
+const matched = computed(() => route.meta.matched)
 
-const changeUserAuth = async (id) => {
+const changeUserAuth = async(id) => {
   const res = await setUserAuthority({
     authorityId: id,
-  });
+  })
   if (res.code === 0) {
-    window.sessionStorage.setItem("needCloseAll", "true");
-    window.location.reload();
+    window.sessionStorage.setItem('needCloseAll', 'true')
+    window.location.reload()
   }
-};
+}
 
-const reloadFlag = ref(true);
-let reloadTimer = null;
-const reload = async () => {
+const reloadFlag = ref(true)
+let reloadTimer = null
+const reload = async() => {
   if (reloadTimer) {
-    window.clearTimeout(reloadTimer);
+    window.clearTimeout(reloadTimer)
   }
-  reloadTimer = window.setTimeout(async () => {
+  reloadTimer = window.setTimeout(async() => {
     if (route.meta.keepAlive) {
-      reloadFlag.value = false;
-      await nextTick();
-      reloadFlag.value = true;
+      reloadFlag.value = false
+      await nextTick()
+      reloadFlag.value = true
     } else {
-      const title = route.meta.title;
-      router.push({ name: "Reload", params: { title } });
+      const title = route.meta.title
+      router.push({ name: 'Reload', params: { title }})
     }
-  }, 400);
-};
+  }, 400)
+}
 
-const isShadowBg = ref(false);
+const isShadowBg = ref(false)
 const totalCollapse = () => {
-  isCollapse.value = !isCollapse.value;
-  isSider.value = !isCollapse.value;
-  isShadowBg.value = !isCollapse.value;
-  emitter.emit("collapse", isCollapse.value);
-};
+  isCollapse.value = !isCollapse.value
+  isSider.value = !isCollapse.value
+  isShadowBg.value = !isCollapse.value
+  emitter.emit('collapse', isCollapse.value)
+}
 
 const toPerson = () => {
-  router.push({ name: "person" });
-};
+  router.push({ name: 'person' })
+}
 const changeShadow = () => {
-  isShadowBg.value = !isShadowBg.value;
-  isSider.value = !!isCollapse.value;
-  totalCollapse();
-};
+  isShadowBg.value = !isShadowBg.value
+  isSider.value = !!isCollapse.value
+  totalCollapse()
+}
+
+const remainingTime = computed(() => {
+  // 获取当前时间
+  const now = new Date()
+  // 获取过期时间
+  const expireDate = new Date(userStore.userInfo.expire_date)
+  // 计算差值（单位：毫秒）
+  const diff = expireDate - now
+  let color = 'success' // 默认为绿色
+
+  if (diff < 0) {
+    // 已过期，计算过期天数
+    const days = Math.ceil(Math.abs(diff) / (1000 * 60 * 60 * 24))
+    color = 'danger' // 红色
+    return { days, expired: true, color }
+  } else {
+    // 将差值转换为天数、小时、分钟和秒数
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+    if (days <= 15) {
+      color = 'warning' // 黄色
+    }
+    return { days, hours, minutes, seconds, expired: false, color }
+  }
+})
 </script>
 
 <style lang="scss">

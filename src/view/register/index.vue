@@ -1,6 +1,8 @@
 <template>
   <div class="authority">
-    <warning-bar title="注：账号批量注册" />
+    <warning-bar
+      title="注：账号批量注册时发送暂停信号，卡商模式下的任务暂停后，已携带号码的子任务将会继续完成，避免资源浪费"
+    />
     <div class="gva-table-box">
       <div class="gva-btn-list">
         <el-input
@@ -20,6 +22,7 @@
             () => {
               drawer = true;
               RefreshAvailableConcurrency();
+              refreshProxyInfoList()
             }
           "
         >新建任务</el-button>
@@ -46,6 +49,13 @@
             @click="resumeTask()"
           >恢复任务</el-button>
         </el-tooltip>
+
+        <el-button
+          icon="Bell"
+          type="primary"
+          :disabled="multipleSelection.length == 0"
+          @click="batchDelete()"
+        >批量删除</el-button>
 
         <el-button
           type="primary"
@@ -112,7 +122,6 @@
               :type="getButtonType(row.status)"
               size="small"
               :loading="row.status == 'Running'"
-              :icon="getButtonIcon(row.status)"
               plain
             >{{ getStatusButtonType(row.status) }}</el-button>
           </template>
@@ -131,26 +140,50 @@
           label="并发数"
           min-width="130"
           prop="concurrency"
-        />
+        >
+          <template #default="{ row }">
+            <span class="font-bold">{{ row.concurrency }}</span>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
           label="成功"
           min-width="130"
           prop="success_count"
-        />
+        >
+          <template #default="{ row }">
+            <span
+              v-if="row.success_count > 0"
+              class="font-bold text-blue-300"
+            >
+              {{ row.mode == 0
+                ? (row.totalNumber > 0 ? ((row.success_count / row.totalNumber) * 100).toFixed(2) + '%' : '0%')
+                : (row.target_success_count > 0 ? ((row.success_count / row.target_success_count) * 100).toFixed(2) + '%' : '0%')
+              }}
+            </span>
+            <span
+              v-else
+              class="font-bold"
+            >0%</span>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
           label="封号"
           min-width="130"
           prop="blocked_count"
-        />
+        >
+          <template #default="{ row }">
+            <span class="font-bold">{{ row.blocked_count }}</span>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
           label="风控1小时"
           min-width="130"
         >
           <template #default="scope">
-            {{ scope.row.no_routes_count + scope.row.too_recent_count }}
+            <span class="font-bold">{{ scope.row.no_routes_count + scope.row.too_recent_count }}</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -158,19 +191,32 @@
           label="累计消耗(抢到卡)"
           min-width="150"
           prop="get_phone_count"
-        />
+        >
+          <template #default="scope">
+            <span class="font-bold">{{ scope.row.get_phone_count }}</span>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
           label="非官方"
           min-width="130"
           prop="office_count"
-        />
+        >
+          <template #default="scope">
+            <span class="font-bold">{{ scope.row.office_count }}</span>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
           label="总数"
           min-width="100"
           prop="target_success_count"
-        />
+        >
+          <template #default="{ row }">
+            <span class="font-bold"> {{ row.mode == 0 ? row.totalNumber : row.target_success_count }}</span>
+
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
           label="创建时间"
@@ -186,11 +232,22 @@
         <el-table-column
           align="left"
           label="操作"
-          width="260"
+          width="320"
           fixed="right"
         >
           <template #default="scope">
             <div class="button-group">
+              <el-button
+                type="primary"
+                :disabled="scope.row.status !== 'Running'"
+                link
+                @click="()=>{
+                  taskId = scope.row.ID
+                  dialogVisible = true
+                  concurrency = scope.row.concurrency
+                  RefreshAvailableConcurrency()
+                }"
+              >更新并发数</el-button>
               <el-button
                 icon="Files"
                 type="primary"
@@ -202,6 +259,7 @@
                   })
                 "
               >详情</el-button>
+
               <!-- <el-button
                 icon="Edit"
                 link
@@ -392,14 +450,17 @@
                 <el-radio
                   label="0"
                   size="large"
+                  @click="refreshProxyInfoList();"
                 >文本模式</el-radio>
                 <el-radio
                   label="1"
                   size="large"
-                  @click="()=>{
-                    refreshProxyInfoList()
-                    refreshCardMerchantInfoList()
-                  }"
+                  @click="
+                    () => {
+                      refreshProxyInfoList();
+                      refreshCardMerchantInfoList();
+                    }
+                  "
                 >卡商模式</el-radio>
               </el-radio-group>
             </el-form-item>
@@ -448,7 +509,6 @@
           </el-select>
         </el-form-item>
         <el-form-item
-          v-if="mode === '1'"
           label="选择代理"
         >
           <el-select
@@ -500,7 +560,54 @@
         </el-form-item>
       </el-form>
     </el-drawer>
+
+    <el-dialog
+      v-model="dialogVisible"
+      title="更新并发数"
+      width="30%"
+      :before-close="handleDialogClose"
+    >
+      <el-form-item
+        label="并发数"
+        prop="concurrency"
+      >
+        <el-input
+          v-model.number="concurrency"
+          type="number"
+          placeholder="并发数"
+          :min="1"
+          :max="1000"
+          style="width: 100%"
+        />
+        <span class="text-sm text-orange-300 mt-2">当前可用并发数{{
+          concurrencyInfo.concurrencyLimit -
+            concurrencyInfo.currentConcurrency
+        }}</span>
+        <el-icon
+          class="mt-2 cursor-pointer"
+          :class="{ rotate: isRefreshing }"
+          style="margin-left: 4px"
+          :size="12"
+          @click="RefreshAvailableConcurrency()"
+        ><Refresh /></el-icon>
+      </el-form-item>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            @click="()=>{
+              dialogVisible = false
+              updateRegisterSubTaskConcurrency()
+            }"
+          >
+            提交
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
+
 </template>
 
 <script setup>
@@ -518,6 +625,7 @@ import {
   deleteRegisterTask,
   PauseTask,
   ResumeTask,
+  UpdateRegisterSubTaskConcurrency
 } from '@/api/registerTask'
 import { getCountryInfoList } from '@/api/country'
 import WarningBar from '@/components/warningBar/warningBar.vue'
@@ -527,9 +635,7 @@ import { getAvailableConcurrency } from '@/api/user'
 import { getAccountTagInfoList } from '@/api/accoutTag'
 import { getAccountGroupInfoList } from '@/api/accoutGroup'
 import { getCardMerchantInfoList } from '@/api/cardMerchant'
-import {
-  getProxyInfoList,
-} from '@/api/proxy'
+import { getProxyInfoList } from '@/api/proxy'
 
 const handleClose = (done) => {
   done()
@@ -539,7 +645,14 @@ defineOptions({
   name: 'Register',
 })
 
+const dialogVisible = ref(false)
+const handleDialogClose = (done) => {
+  done()
+}
+
 const drawer = ref(false)
+const drawerForConcurrency = ref(false)
+const concurrency = ref(0)
 const mode = ref('0')
 const page = ref(1)
 const total = ref(0)
@@ -591,7 +704,7 @@ const getTableData = async(sortProp, sortOrder) => {
     order: sortOrder,
   })
   if (table.code === 0) {
-    tableData.value = []
+    // tableData.value = []
     setTimeout(() => {
       tableData.value = table.data.list
 
@@ -739,7 +852,7 @@ const getStatusButtonType = (status) => {
     case 'Pending':
       return '等待'
     case 'Success':
-      return '已成功'
+      return '已完成'
     case 'Failed':
       return '失败'
     case 'Running':
@@ -847,14 +960,16 @@ const rules = {
   country_id: [{ required: true, message: '请选择国家区号', trigger: 'blur' }],
   proxy_id: [
     { required: true, message: '请选择代理', trigger: 'blur' },
-    { validator: (rule, value, callback) => {
-      if (value === 0) {
-        callback(new Error('代理ID不能为0'))
-      } else {
-        callback()
-      }
-    }, trigger: 'change'
-    }
+    {
+      validator: (rule, value, callback) => {
+        if (value === 0) {
+          callback(new Error('代理ID不能为0'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change',
+    },
   ],
   mode: [{ required: true, message: '请选择注册模式', trigger: 'blur' }],
   concurrency: [
@@ -1083,6 +1198,46 @@ const toggleSelection = (rows) => {
 }
 const handleSelectionChange = (val) => {
   multipleSelection.value = val
+}
+
+const batchDelete = () => {
+  // 显示确认对话框
+  ElMessageBox.confirm('确认要删除选中的行数据吗？', '批量删除', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(() => {
+      // 用户点击了确定按钮，执行删除操作
+      multipleSelection.value.forEach(async(row) => {
+        // 只有当状态不是Running时，才调用删除接口
+        if (row.status !== 'Running') {
+          // 调用删除任务的函数
+          const res = await deleteRegisterTask({ ID: row.ID })
+          if (res.code === 0) {
+            ElMessage.success('任务删除成功')
+            if (tableData.value.length === 1 && page.value > 1) {
+              page.value--
+            }
+            getTableData()
+          }
+        }
+      })
+    })
+    .catch(() => {
+      // 用户点击了取消按钮
+      ElMessage.warning('已取消批量删除')
+    })
+}
+const taskId = ref(0)
+const updateRegisterSubTaskConcurrency = async() => {
+  const res = await UpdateRegisterSubTaskConcurrency(taskId.value, concurrency.value)
+  if (res.code === 0) {
+    ElMessage.success('更新成功')
+    getTableData()
+  } else {
+    ElMessage.error('更新失败')
+  }
 }
 </script>
 

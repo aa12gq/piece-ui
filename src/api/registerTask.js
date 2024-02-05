@@ -127,3 +127,11 @@ export const ResumeTask = (id) => {
   })
 }
 
+
+export const UpdateRegisterSubTaskConcurrency = (id, concurrency) => {
+  return service({
+    url: `/registerTask/updateRegisterSubTaskConcurrency/${id}?concurrency=${concurrency}`,
+    method: 'get',
+  })
+}
+

@@ -45,6 +45,13 @@
         />
         <el-table-column
           align="left"
+          label="过期时间"
+          min-width="160"
+          prop="expire_date"
+          :formatter="row => dayjs(row.expire_date).format('YYYY-MM-DD HH:mm:ss')"
+        />
+        <el-table-column
+          align="left"
           label="并发数限制"
           min-width="150"
           prop="concurrencyLimit"
@@ -207,6 +214,30 @@
             <el-input v-model="userInfo.email" />
           </el-form-item>
           <el-form-item
+            label="并发限制"
+            prop="concurrencyLimit"
+          >
+            <el-input v-model.number="userInfo.concurrencyLimit" />
+          </el-form-item>
+          <el-form-item
+            label="目前并发"
+            prop="currentConcurrency"
+          >
+            <el-input v-model.number="userInfo.currentConcurrency" />
+          </el-form-item>
+          <el-form-item
+            label="到期时间"
+            prop="expire_date"
+          >
+            <el-date-picker
+              v-model="userInfo.expire_date"
+              type="datetime"
+              placeholder="选择过期时间"
+              format="YYYY/MM/DD HH:mm:ss"
+              class="w-full"
+            />
+          </el-form-item>
+          <el-form-item
             label="用户角色"
             prop="authorityId"
           >
@@ -273,7 +304,6 @@
   </div>
 </template>
 
-
 <script setup>
 
 import {
@@ -291,6 +321,7 @@ import { setUserInfo, resetPassword } from '@/api/user.js'
 
 import { nextTick, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import dayjs from 'dayjs'
 
 defineOptions({
   name: 'User',
@@ -323,6 +354,7 @@ const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref([])
+const expireTime = ref()
 // 分页
 const handleSizeChange = (val) => {
   pageSize.value = val
@@ -420,6 +452,8 @@ const userInfo = ref({
   authorityId: '',
   authorityIds: [],
   enable: 1,
+  concurrencyLimit: 0,
+  currentConcurrency: 0,
 })
 
 const rules = ref({
@@ -447,6 +481,7 @@ const rules = ref({
 const userForm = ref(null)
 const enterAddUserDialog = async() => {
   userInfo.value.authorityId = userInfo.value.authorityIds[0]
+  // userInfo.value.expire_date = expireTime.value
   userForm.value.validate(async valid => {
     if (valid) {
       const req = {

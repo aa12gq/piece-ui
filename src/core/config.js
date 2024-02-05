@@ -3,7 +3,7 @@
  */
 
 const config = {
-  appName: "贝吉塔",
+  appName: "WhatsApp NB",
   appLogo:
     "https://bitpig-column.oss-cn-hangzhou.aliyuncs.com/AA12/190691488370262017.jpg",
   showViteLogo: true,

@@ -4,7 +4,7 @@ export const getSieveTaskList = (params) => {
   // params 包含 page, pageSize, taskName, sort, order 等
   const { page, pageSize, taskName, sort, order } = params
   let url = `/sieveTask/getSieveTaskList?page=${page}&pageSize=${pageSize}`
-  if (taskName) url += `&taskName=${taskName}`
+  if (taskName) url += `&taskName=${String(taskName)}`
   if (sort) url += `&sort=${sort}&order=${order}` // 添加排序参数
 
   return service({
@@ -77,5 +77,37 @@ export const downloadNormalAccounts = (taskId) => {
     url: `/sievenNumber/downloadNormalAccounts/${String(taskId)}`,
     method: 'get',
     responseType: 'blob', // 确保响应类型为 blob，这样才能处理文件流
+  })
+}
+
+export const downloadInvalidAccounts = (taskId) => {
+  return service({
+    url: `/sievenNumber/downloadInvalidAccounts/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob', // 确保响应类型为 blob，这样才能处理文件流
+  })
+}
+
+export const downloadAllAccounts = (taskId) => {
+  return service({
+    url: `/sievenNumber/downloadAllAccounts/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob', // 确保响应类型为 blob，这样才能处理文件流
+  })
+}
+
+export const downloadFailedAccounts = (taskId) => {
+  return service({
+    url: `/sievenNumber/downloadFailedAccounts/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob', // 确保响应类型为 blob，这样才能处理文件流
+  })
+}
+
+export const downloadOriginFile = (taskId) => {
+  return service({
+    url: `/sieveTask/downloadOriginFile/${String(taskId)}`,
+    method: 'get',
+    responseType: 'blob',
   })
 }
