@@ -9,6 +9,10 @@
         type="primary"
         @click="clear"
       >一键清空卖号记录</el-button>
+      <el-button
+        type="info"
+        @click="refreshSubcomponent"
+      >刷新一下</el-button>
       <!-- <el-button type="danger">全量导出不标已售</el-button>
       <el-button type="danger">全量删除已售账号</el-button> -->
     </div>
@@ -24,20 +28,12 @@
         name="first"
         class="-mt-4"
       >
-        <soldAccout />
-        <el-pagination
-          :current-page="page"
-          :page-size="pageSize"
-          :page-sizes="[10, 30, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @current-change="handlePageChange"
-          @size-change="handleSizeChange"
-        /></el-tab-pane>
+        <soldAccout ref="soldAccoutRef" />
+      </el-tab-pane>
       <el-tab-pane
         label="卖号记录"
         name="second"
-      ><soldAccountRecord /></el-tab-pane>
+      ><soldAccountRecord ref="soldAccountRecordRef" /></el-tab-pane>
     </el-tabs>
     <el-dialog
       v-model="dialogFormVisible"
@@ -154,6 +150,16 @@ const refreshCountryInfoList = async() => {
     total.value = result.data.total
     page.value = result.data.page
     pageSize.value = result.data.pageSize
+  }
+}
+const soldAccountRecordRef = ref(null)
+const soldAccoutRef = ref(null)
+const refreshSubcomponent = () => {
+  if (soldAccoutRef.value) {
+    soldAccoutRef.value.getTableData();
+  }
+  if (soldAccountRecordRef.value) {
+    soldAccountRecordRef.value.getTableData();
   }
 }
 
@@ -312,6 +318,9 @@ const enterDialog = async() => {
       switch (type.value) {
         case 'export':
           await downloadFile(() => exportAccount(form.value))
+          setTimeout(() => {
+            closeDialog()
+          }, 500)
           break
         case 'edit':
           break
@@ -326,7 +335,6 @@ const enterDialog = async() => {
     }
   })
 }
-
 
 const clear = (row) => {
   ElMessageBox.confirm('此操作将永久删除所有卖号记录, 是否继续?', '提示', {

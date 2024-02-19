@@ -1,49 +1,62 @@
-<template><div>
-  <el-table
-    :data="tableData"
-    :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-    row-key="authorityId"
-    style="width: 100%"
-  >
-    <el-table-column
-      align="left"
-      label="国家"
-      min-width="180"
-      prop="country_name"
+<template>
+  <div>
+    <el-table
+      ref="multipleTableRef"
+      :data="tableData"
+      :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+      style="width: 100%"
+    >
+      <el-table-column
+        align="left"
+        label="国家"
+        min-width="180"
+      >
+        <template #default="scope">
+          {{ scope.row.countryName.String }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        align="left"
+        label="分组"
+        min-width="180"
+        prop="account_group_name"
+      />
+      <el-table-column
+        align="left"
+        label="标签"
+        min-width="180"
+        prop="account_tag_name"
+      />
+      <el-table-column
+        align="left"
+        label="总库存"
+        min-width="180"
+        prop="inventory"
+      />
+      <el-table-column
+        align="left"
+        label="可售"
+        min-width="180"
+        prop="remaining_count"
+      />
+      <el-table-column
+        align="left"
+        label="已售"
+        min-width="180"
+        prop="sold_count"
+      />
+    </el-table>
+    <el-pagination
+      :current-page="page"
+      :page-size="pageSize"
+      :page-sizes="[10, 30, 50, 100]"
+      :total="total"
+      layout="total, sizes, prev, pager, next, jumper"
+      @current-change="handlePageChange"
+      @size-change="handleSizeChange"
     />
-    <el-table-column
-      align="left"
-      label="分组"
-      min-width="180"
-      prop="account_group_name"
-    />
-    <el-table-column
-      align="left"
-      label="标签"
-      min-width="180"
-      prop="account_tag_name"
-    />
-    <el-table-column
-      align="left"
-      label="总库存"
-      min-width="180"
-      prop="inventory"
-    />
-    <el-table-column
-      align="left"
-      label="可售"
-      min-width="180"
-      prop="remaining_count"
-    />
-    <el-table-column
-      align="left"
-      label="已售"
-      min-width="180"
-      prop="sold_count"
-    />
-
-  </el-table>
-</div></template>
+  </div>
+</template>
 
 <script lang="ts" setup>
 import { ref } from 'vue'
@@ -71,6 +84,20 @@ const getTableData = async() => {
   }
 }
 
+const handlePageChange = (val) => {
+  page.value = val
+  getTableData()
+}
+
+const handleSizeChange = (val) => {
+  pageSize.value = val
+  getTableData()
+}
+
 getTableData()
+// 使用defineExpose暴露方法
+defineExpose({
+  getTableData
+})
 
 </script>

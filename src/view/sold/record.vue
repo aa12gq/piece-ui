@@ -153,6 +153,9 @@ const download = async(row) => {
 
 getTableData()
 
-
+// 使用defineExpose暴露方法
+defineExpose({
+  getTableData
+})
 
 </script>

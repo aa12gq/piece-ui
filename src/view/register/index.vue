@@ -1,7 +1,7 @@
 <template>
   <div class="authority">
     <warning-bar
-      title="注：账号批量注册时发送暂停信号，卡商模式下的任务暂停后，已携带号码的子任务将会继续完成，避免资源浪费"
+      title="注：账号批量注册时发送暂停信号，接码平台模式下的任务暂停后，已携带号码的子任务将会继续完成，避免资源浪费"
     />
     <div class="gva-table-box">
       <div class="gva-btn-list">
@@ -132,7 +132,7 @@
           min-width="130"
         >
           <template #default="{ row }">
-            {{ row.mode == 0 ? "文本上传" : "卡商注册" }}
+            {{ row.mode == 0 ? "文本上传" : "接码平台" }}
           </template>
         </el-table-column>
         <el-table-column
@@ -157,14 +157,14 @@
               class="font-bold text-blue-300"
             >
               {{ row.mode == 0
-                ? (row.totalNumber > 0 ? ((row.success_count / row.totalNumber) * 100).toFixed(2) + '%' : '0%')
-                : (row.target_success_count > 0 ? ((row.success_count / row.target_success_count) * 100).toFixed(2) + '%' : '0%')
+                ? (row.totalNumber > 0 ? row.success_count + ' (' + ((row.success_count / row.totalNumber) * 100).toFixed(2) + '%)' : '0 (0%)')
+                : (row.target_success_count > 0 ? row.success_count + ' (' + ((row.success_count / row.target_success_count) * 100).toFixed(2) + '%)' : '0 (0%)')
               }}
             </span>
             <span
               v-else
               class="font-bold"
-            >0%</span>
+            >0 (0%)</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -451,7 +451,7 @@
                   label="0"
                   size="large"
                   @click="refreshProxyInfoList();"
-                >文本模式</el-radio>
+                >文本上传</el-radio>
                 <el-radio
                   label="1"
                   size="large"
@@ -461,7 +461,7 @@
                       refreshCardMerchantInfoList();
                     }
                   "
-                >卡商模式</el-radio>
+                >接码平台</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -493,12 +493,12 @@
         </el-form-item>
         <el-form-item
           v-if="mode === '1'"
-          label="选择卡商"
+          label="选择接码平台"
         >
           <el-select
             v-model="form.card_merchant_id"
             class="w-full"
-            placeholder="请选择卡商"
+            placeholder="请选择接码平台"
           >
             <el-option
               v-for="item in CardMerchantInfoList"

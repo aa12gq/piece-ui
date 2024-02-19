@@ -6,21 +6,22 @@
     <div class="gva-table-box">
       <div class="gva-btn-list" />
       <div class="gva-btn-list">
-        <div class="flex space-x-4">
-          <el-input
-            v-model="searchText"
-            placeholder="请输入手机号码"
-            clearable
-            style="width: 200px"
-            @clear="clearSearch"
-            @keyup.enter.native="searchTask"
-          />
-          <el-button
-            type="primary"
-            icon="Search"
-            @click="searchPhoneNumber"
-          >搜索</el-button>
-          <!-- <el-button
+        <div class="flex items-center justify-between space-x-4 w-full">
+          <div>
+            <el-input
+              v-model="searchText"
+              placeholder="请输入手机号码"
+              clearable
+              style="width: 200px"
+              @clear="clearSearch"
+              @keyup.enter.native="searchTask"
+            />
+            <el-button
+              type="primary"
+              icon="Search"
+              @click="searchPhoneNumber"
+            >搜索</el-button>
+            <!-- <el-button
             type="primary"
             icon="Download"
             :disabled="!$route.params.id || $route.params.id === 0"
@@ -32,13 +33,42 @@
             :disabled="!$route.params.id || $route.params.id === 0"
             @click="downloadDisable"
           >导出禁用账号</el-button> -->
-          <el-button
-            color="#626aef"
-            icon="refresh"
-            :dark="isDark"
-            plain
-            @click="getTableData"
-          >刷新</el-button>
+            <el-button
+              color="#626aef"
+              icon="refresh"
+              :dark="isDark"
+              plain
+              @click="getTableData"
+            >刷新</el-button>
+          </div>
+
+          <div class="ml-auto">
+            <el-radio-group
+              v-model="accountStatus"
+              class="ml-4"
+            >
+              <el-radio
+                label=""
+                size="large"
+              >全部</el-radio>
+              <el-radio
+                label="NoRoutes"
+                size="large"
+              >风控1小时</el-radio>
+              <el-radio
+                label="BadParam"
+                size="large"
+              >参数错误</el-radio>
+              <el-radio
+                label="Office"
+                size="large"
+              >非官方</el-radio>
+              <el-radio
+                label="Blocked"
+                size="large"
+              >封禁</el-radio>
+            </el-radio-group>
+          </div>
         </div>
       </div>
       <div
@@ -147,6 +177,7 @@ const route = useRoute()
 const taskName = ref('')
 const searchText = ref('')
 const currentSearchText = ref('')
+const accountStatus = ref('')
 
 // 监听currentPage变化，获取对应页数的数据
 const handlePageChange = (page) => {
@@ -176,7 +207,8 @@ const getTableData = async() => {
     currentPage.value,
     pageSize.value,
     route.params.id,
-    currentSearchText.value
+    currentSearchText.value,
+    accountStatus.value,
   )
   if (table.code === 0) {
     table.data.list.forEach((item) => {

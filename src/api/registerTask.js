@@ -34,9 +34,9 @@ export const updateAccountGroupInfo = (data) => {
   })
 }
 
-export const getSubTaskList = (page, pageSize, taskId, phone) => {
+export const getSubTaskList = (page, pageSize, taskId, phone, state) => {
   return service({
-    url: `/registerSubTask/getRegisterSubTaskList?page=${page}&pageSize=${pageSize}&main_task_id=${taskId}&phone=${phone}`,
+    url: `/registerSubTask/getRegisterSubTaskList?page=${page}&pageSize=${pageSize}&main_task_id=${taskId}&phone=${phone}&state=${state}`,
     method: 'get',
   })
 }

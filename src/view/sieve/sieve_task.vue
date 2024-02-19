@@ -129,7 +129,7 @@
         />
         <el-table-column
           label="ID"
-          width="80"
+          width="120"
           prop="ID"
         />
         <el-table-column
