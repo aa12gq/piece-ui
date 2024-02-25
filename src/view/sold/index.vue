@@ -40,7 +40,6 @@
       :before-close="closeDialog"
       :title="dialogTitle"
     >
-      <warning-bar title="导出账号" />
       <el-form
         ref="Form"
         :model="form"
@@ -61,8 +60,9 @@
           />
         </el-select>
         <el-select
-          v-model.number="form.group_id"
+          v-model="form.group_ids"
           placeholder="请选择分组"
+          multiple
           class="w-full"
         >
           <el-option
@@ -73,8 +73,9 @@
           />
         </el-select>
         <el-select
-          v-model.number="form.tag_id"
+          v-model="form.tag_ids"
           placeholder="请选择标签"
+          multiple
           class="w-full"
         >
           <el-option
@@ -175,8 +176,8 @@ const form = ref({
   count: null,
   country_id: '',
   format: null,
-  tag_id: null,
-  group_id: null,
+  tag_ids: [],
+  group_ids: [],
 })
 const Form = ref(null)
 const initForm = () => {
@@ -202,8 +203,8 @@ const initForm = () => {
     count: null,
     country_id: null,
     format: null,
-    tag_id: null,
-    group_id: null,
+    tag_ids: [],
+    group_ids: [],
   }
 }
 

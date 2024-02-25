@@ -1,7 +1,7 @@
 <template>
   <div class="authority">
     <warning-bar
-      title="注：账号批量注册时发送暂停信号，接码平台模式下的任务暂停后，已携带号码的子任务将会继续完成，避免资源浪费"
+      title="注：账号批量注册时发送暂停信号，任务暂停后将不再进行调度，运行中的的子任务将会继续完成，避免资源浪费"
     />
     <div class="gva-table-box">
       <div class="gva-btn-list">
@@ -97,15 +97,32 @@
         />
         <el-table-column
           label="ID"
-          min-width="100"
+          min-width="60"
           prop="ID"
         />
         <el-table-column
           align="left"
           label="任务名称"
-          min-width="130"
+          min-width="140"
           prop="task_name"
-        />
+        >
+          <template #default="scope">
+            <el-tooltip
+              class="item"
+              effect="dark"
+              :content="scope.row.task_name"
+              placement="top"
+            >
+              <div class="text-ellipsis">
+                {{
+                  scope.row.task_name.length > 10
+                    ? scope.row.task_name.slice(0, 10) + "..."
+                    : scope.row.task_name
+                }}
+              </div>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <!-- <el-table-column
           align="left"
           label="文件名称"
@@ -115,30 +132,53 @@
         <el-table-column
           align="left"
           label="任务状态"
-          min-width="150"
+          min-width="110"
         >
-          <template #default="{ row }">
+          <!-- <template #default="{ row }">
             <el-button
               :type="getButtonType(row.status)"
               size="small"
               :loading="row.status == 'Running'"
               plain
             >{{ getStatusButtonType(row.status) }}</el-button>
+          </template> -->
+          <template #default="{ row }">
+            <el-tag
+              class="border-none"
+              :color="getStatusTag(row.status)"
+              effect="dark"
+            >
+              {{ getStatusButtonType(row.status, row) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column
           align="left"
-          label="注册模式"
-          min-width="130"
+          label="注册模式(标签-分组)"
+          :min-width="190"
+          :max-width="300"
         >
+
           <template #default="{ row }">
-            {{ row.mode == 0 ? "文本上传" : "接码平台" }}
+            <el-tooltip
+              class="item"
+              effect="dark"
+              :content="row.mode == 0 ? '文本上传' + '-' + row.account_tag_name + '- '+ row.account_group_name : '接码平台' + '-' + row.account_tag_name + '- '+ row.account_group_name"
+              placement="top"
+            >
+              {{
+                (row.mode == 0 ? "文本上传" + "-" + row.account_tag_name + "- "+ row.account_group_name : "接码平台" + "-" + row.account_tag_name + "- "+ row.account_group_name).length > 20
+                  ? (row.mode == 0 ? "文本上传" + "-" + row.account_tag_name + "- "+ row.account_group_name : "接码平台" + "-" + row.account_tag_name + "- "+ row.account_group_name).substring(0, 20) + "..."
+                  : (row.mode == 0 ? "文本上传" + "-" + row.account_tag_name + "- "+ row.account_group_name : "接码平台" + "-" + row.account_tag_name + "- "+ row.account_group_name)
+              }}
+            </el-tooltip>
+
           </template>
         </el-table-column>
         <el-table-column
           align="left"
           label="并发数"
-          min-width="130"
+          min-width="80"
           prop="concurrency"
         >
           <template #default="{ row }">
@@ -152,25 +192,29 @@
           prop="success_count"
         >
           <template #default="{ row }">
-            <span
-              v-if="row.success_count > 0"
-              class="font-bold text-blue-300"
-            >
-              {{ row.mode == 0
-                ? (row.totalNumber > 0 ? row.success_count + ' (' + ((row.success_count / row.totalNumber) * 100).toFixed(2) + '%)' : '0 (0%)')
-                : (row.target_success_count > 0 ? row.success_count + ' (' + ((row.success_count / row.target_success_count) * 100).toFixed(2) + '%)' : '0 (0%)')
-              }}
-            </span>
-            <span
-              v-else
-              class="font-bold"
-            >0 (0%)</span>
+            <strong>
+              <span
+                v-if="row.success_count > 0"
+                class="font-bold text-blue-500"
+              >
+                {{ row.mode == 0
+                  ? (row.totalNumber > 0 ? row.success_count + ' (' + ((row.success_count / row.totalNumber) * 100).toFixed(2) + '%)' : '0 (0%)')
+                  : (row.target_success_count > 0 ? row.success_count + ' (' + ((row.success_count / row.target_success_count) * 100).toFixed(2) + '%)' : '0 (0%)')
+                }}
+              </span>
+              <span
+                v-else
+                class="font-bold"
+              >0 (0%)</span>
+            </strong>
+
           </template>
         </el-table-column>
         <el-table-column
           align="left"
           label="封号"
-          min-width="130"
+          :min-width="100"
+          :max-width="200"
           prop="blocked_count"
         >
           <template #default="{ row }">
@@ -180,7 +224,8 @@
         <el-table-column
           align="left"
           label="风控1小时"
-          min-width="130"
+          :min-width="100"
+          :max-width="200"
         >
           <template #default="scope">
             <span class="font-bold">{{ scope.row.no_routes_count + scope.row.too_recent_count }}</span>
@@ -189,7 +234,8 @@
         <el-table-column
           align="left"
           label="累计消耗(抢到卡)"
-          min-width="150"
+          :min-width="135"
+          :max-width="200"
           prop="get_phone_count"
         >
           <template #default="scope">
@@ -199,7 +245,8 @@
         <el-table-column
           align="left"
           label="非官方"
-          min-width="130"
+          :min-width="100"
+          :max-width="200"
           prop="office_count"
         >
           <template #default="scope">
@@ -209,7 +256,8 @@
         <el-table-column
           align="left"
           label="总数"
-          min-width="100"
+          :min-width="100"
+          :max-width="200"
           prop="target_success_count"
         >
           <template #default="{ row }">
@@ -636,6 +684,7 @@ import { getAccountTagInfoList } from '@/api/accoutTag'
 import { getAccountGroupInfoList } from '@/api/accoutGroup'
 import { getCardMerchantInfoList } from '@/api/cardMerchant'
 import { getProxyInfoList } from '@/api/proxy'
+import { getStatusTag, getStatusButtonType } from '@/utils/task'
 
 const handleClose = (done) => {
   done()
@@ -847,56 +896,8 @@ const resumeTask = (row) => {
     })
 }
 
-const getStatusButtonType = (status) => {
-  switch (status) {
-    case 'Pending':
-      return '等待'
-    case 'Success':
-      return '已完成'
-    case 'Failed':
-      return '失败'
-    case 'Running':
-      return '运行中'
-    case 'Pause':
-      return '已暂停'
-    default:
-      return ''
-  }
-}
 
-const getButtonType = (status) => {
-  switch (status) {
-    case 'Pending':
-      return 'warning'
-    case 'Success':
-      return 'success'
-    case 'Failed':
-      return 'danger'
-    case 'Running':
-      return 'info'
-    case 'Pause':
-      return 'danger'
-    default:
-      return ''
-  }
-}
 
-const getButtonIcon = (status) => {
-  switch (status) {
-    case 'Pending':
-      return 'el-icon-clock'
-    case 'Success':
-      return 'CircleCheck'
-    case 'Failed':
-      return 'el-icon-circle-close'
-    case 'Running':
-      return 'el-icon-loading'
-    case 'Pause':
-      return 'VideoPlay'
-    default:
-      return ''
-  }
-}
 // 新建任务
 const formRef = ref(null)
 

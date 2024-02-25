@@ -125,11 +125,11 @@
       >
         <el-table-column
           type="selection"
-          width="55"
+          width="60"
         />
         <el-table-column
           label="ID"
-          width="120"
+          width="80"
           prop="ID"
         />
         <el-table-column
@@ -364,7 +364,7 @@
                       v-if="scope.row.invalidAccounts > 1"
                       @click="downloadInvalid(scope.row)"
                     >下载无效账号</el-dropdown-item>
-                    <el-dropdown-item @click="downloadAll(scope.row)">下载正常及封禁账号</el-dropdown-item>
+                    <!-- <el-dropdown-item @click="downloadAll(scope.row)">下载正常及封禁账号</el-dropdown-item> -->
                     <el-dropdown-item @click="downloadFailed(scope.row)">下载检测失败账号</el-dropdown-item>
                     <el-dropdown-item @click="downloadOrigin(scope.row)">下载原始文件</el-dropdown-item>
                   </el-dropdown-menu>
@@ -488,6 +488,14 @@
             </el-tooltip>
           </el-upload>
         </el-form-item>
+        <el-progress
+          v-if="isShowProgress"
+          class="py-2"
+          :text-inside="true"
+          :stroke-width="24"
+          status="success"
+          :percentage="loadingProgress"
+        />
 
         <el-form-item>
           <el-button
@@ -527,12 +535,15 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { CircleCloseFilled } from '@element-plus/icons-vue'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 import dayjs from 'dayjs'
+import { getStatusTag } from '@/utils/task'
 
 const handleClose = () => {
   drawer.value = false
 }
 
 const drawer = ref(false)
+const loadingProgress = ref(0)
+const isShowProgress = ref(false)
 
 const page = ref(1)
 const total = ref(0)
@@ -685,11 +696,11 @@ const getStatusButtonType = (status, row) => {
     case 'Init':
       return '初始化'
     case 'Pending':
-      return '等待'
+      return '等待中'
     case 'Success':
       return '已完成'
     case 'Failed':
-      return '失败'
+      return '执行失败'
     case 'Running':
       // 计算总进度百分比
       if (row.totalNumber > 0) {
@@ -704,45 +715,7 @@ const getStatusButtonType = (status, row) => {
       }
       return '检测中'
     case 'Pause':
-      return '暂停'
-    default:
-      return ''
-  }
-}
-
-const getButtonType = (status) => {
-  switch (status) {
-    case 'Init':
-      return 'info'
-    case 'Pending':
-      return 'warning'
-    case 'Success':
-      return 'success'
-    case 'Failed':
-      return 'danger'
-    case 'Running':
-      return 'info'
-    case 'Pause':
-      return 'danger'
-    default:
-      return ''
-  }
-}
-
-const getButtonIcon = (status) => {
-  switch (status) {
-    case 'Init':
-      return 'el-icon-help-filled'
-    case 'Pending':
-      return 'el-icon-clock'
-    case 'Success':
-      return 'CircleCheck'
-    case 'Failed':
-      return 'el-icon-circle-close'
-    case 'Running':
-      return 'el-icon-loading'
-    case 'Pause':
-      return 'VideoPlay'
+      return '已暂停'
     default:
       return ''
   }
@@ -800,6 +773,32 @@ const submitForm = async() => {
   const valid = await formRef.value.validate()
   if (!valid) return
 
+  isShowProgress.value = true
+  loadingProgress.value = 0 // 初始化进度条
+
+  // 快速模拟上传进度
+  const intervalId = setInterval(() => {
+    if (loadingProgress.value < 100) {
+      loadingProgress.value += 20 // 加快进度条速度
+    } else {
+      // 进度完成后立即清除定时器并关闭弹窗
+      clearInterval(intervalId)
+      loadingProgress.value = 100 // 确保进度条完成
+      closeDialogImmediately() // 立即关闭弹窗
+    }
+  }, 500) // 缩短间隔时间加快进度
+
+  // 立即关闭弹窗的方法，定义在 submitForm 内部以访问 intervalId 和其他方法
+  function closeDialogImmediately() {
+    clearInterval(intervalId) // 确保清除定时器
+    loadingProgress.value = 100 // 完成进度条
+    closeDialog() // 关闭弹窗
+    isShowProgress.value = false // 隐藏进度条
+    setTimeout(() => {
+      getTableData() // 刷新列表
+    }, 3000)
+  }
+
   const formData = new FormData()
   formData.append('taskName', form.taskName)
   formData.append('concurrency', form.concurrency)
@@ -812,16 +811,16 @@ const submitForm = async() => {
 
   try {
     const response = await createSieveTask(formData)
+
     if (response && response.code === 0) {
-      closeDialog()
       ElMessage.success('提交成功！')
-      concurrencyInfo.value.currentConcurrency =
-        concurrencyInfo.value.currentConcurrency - form.concurrency
+      concurrencyInfo.value.currentConcurrency -= form.concurrency
+
       setTimeout(() => {
-        getTableData()
         resetForm()
       }, 500)
-      handleClose()
+
+      handleClose && handleClose()
     }
   } catch (error) {
     ElMessage.error(error.message)
@@ -1143,25 +1142,6 @@ const columns = [
     scopedSlots: { customRender: 'operation' },
   },
 ]
-
-const getStatusTag = (status) => {
-  switch (status) {
-    case 'Init': // 初始化状态
-      return '#e6e6d0' // 淡淡的米黄色
-    case 'Pending': // 等待中状态
-      return '#e6e6d0' // 淡淡的米黄色
-    case 'Success': // 成功状态
-      return '#a0d468' // 中度绿色
-    case 'Failed': // 失败状态
-      return '#e57373' // 中度红色
-    case 'Running': // 运行中状态
-      return '#64b5f6' // 中度蓝色
-    case 'Pause': // 暂停状态
-      return '#ffb74d' // 中度橙色
-    default: // 默认状态
-      return '#e0e0e0' // 默认中等浅色
-  }
-}
 
 const multipleTableRef = ref(null)
 const multipleSelection = ref([])

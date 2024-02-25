@@ -52,6 +52,10 @@
                 size="large"
               >全部</el-radio>
               <el-radio
+                label="Succeed"
+                size="large"
+              >成功</el-radio>
+              <el-radio
                 label="NoRoutes"
                 size="large"
               >风控1小时</el-radio>
@@ -161,7 +165,7 @@ import {
   getSubTaskList,
 } from '@/api/registerTask'
 import WarningBar from '@/components/warningBar/warningBar.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted,watch } from 'vue'
 import { formatTimeToStr } from '@/utils/date'
 import { useRoute } from 'vue-router'
 
@@ -178,6 +182,14 @@ const taskName = ref('')
 const searchText = ref('')
 const currentSearchText = ref('')
 const accountStatus = ref('')
+
+// 监听accountStatus变化，获取对应状态的数据
+watch(accountStatus.value, (newValue, oldValue) => {
+  console.log('accountStatus', newValue, oldValue)
+  if (newValue !== oldValue) {
+    getTableData()
+  }
+})
 
 // 监听currentPage变化，获取对应页数的数据
 const handlePageChange = (page) => {
@@ -255,7 +267,7 @@ const getStatusButtonType = (status) => {
     case 'Pending':
       return '等待'
     case 'Success':
-      return '已成功'
+      return '成功'
     case 'Failed':
       return '失败'
     case 'Running':
